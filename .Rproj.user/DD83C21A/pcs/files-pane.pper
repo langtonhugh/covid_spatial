@@ -1,0 +1,9 @@
+{
+    "path" : "~/GitHub/covid_spatial",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}
