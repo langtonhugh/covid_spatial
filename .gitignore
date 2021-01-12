@@ -3,7 +3,7 @@
 data/*
 
 # Session Data files
-*.RData
+data_handling.RData
 
 # User-specific files
 .Ruserdata
