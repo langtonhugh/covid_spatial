@@ -386,71 +386,60 @@ total_crime_lsoa_df <- sub_data_agg_1920_df %>%
 # Join with the sf object.
 total_crime_lsoa_sf <- left_join(lsoa_ew_valid_sf, total_crime_lsoa_df, by = c("geo_code" = "lsoa_code"))
 
+# Save for checks in GeoDa.
+st_write(obj = total_crime_lsoa_sf, dsn = "data/total_crime_lsoa_sf.shp")
+
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling.RData")
 load(file = "data_handling.RData")
 
+# Check distribution for 2019.
+ggplot(data = total_crime_lsoa_sf) +
+  geom_histogram(mapping = aes(x = april_2019), bins = 60)
 
+mean(total_crime_lsoa_sf$april_2019)   # 12
+median(total_crime_lsoa_sf$april_2019) # 8
+table(total_crime_lsoa_sf$april_2019)  # 625 zeros
 
-df_19_totcrim_df <- df_1920_df %>% 
-  filter(Month == "2019-04") %>% 
-  clean_names() %>% 
-  select(lsoa_code, year, month, crime_type, crime_count, urban_rural) %>% 
-  mutate(crime_type = paste(tolower(crime_type)),
-         crime_type = str_replace_all(crime_type, "[^[:alnum:]]", " "),
-         crime_type = str_replace_all(crime_type, " ", "_")) %>% 
-  pivot_wider(id = lsoa_code, values_from = crime_count, names_from = crime_type, names_prefix = "19_") %>% 
-  arrange(lsoa_code)
+# Check distribution for 2020/
+ggplot(data = total_crime_lsoa_sf) +
+  geom_histogram(mapping = aes(x = april_2020), bins = 60)
 
-df_20_totcrim_df <- df_1920_df %>% 
-  filter(Month == "2020-04") %>% 
-  clean_names() %>% 
-  select(lsoa_code, year, month, crime_type, crime_count, urban_rural) %>% 
-  mutate(crime_type = paste(tolower(crime_type)),
-         crime_type = str_replace_all(crime_type, "[^[:alnum:]]", " "),
-         crime_type = str_replace_all(crime_type, " ", "_")) %>% 
-  pivot_wider(id = lsoa_code, values_from = crime_count, names_from = crime_type, names_prefix = "20_") %>% 
-  arrange(lsoa_code) %>% 
-  select(-lsoa_code) # same order as above, but we don't want duplicate names
+mean(total_crime_lsoa_sf$april_2020)   # 9
+median(total_crime_lsoa_sf$april_2020) # 6
+table(total_crime_lsoa_sf$april_2020)  # 1142 zeros
 
-# Bind together
-df_totcrim_df <- bind_cols(df_19_totcrim_df, df_20_totcrim_df)
-
-# Join total crime data to sf object.
-lsoa_ew_valid_totcrim_sf <- left_join(lsoa_ew_valid_sf, df_1920_totcrim_df, by = c("geo_code"= "LSOA code"))
-
-# Initial Global measures of spatial autocorrelation appeared to be heavily impacted by outliers. For example:
-ggplot(data = lsoa_ew_valid_totcrim_sf) +
-  geom_histogram(mapping = aes(x = `2019-04`), bins = 60)
-
-# Remove outliers (visually based on the histogram).
-lsoa_ew_valid_totcrim_no_sf <- lsoa_ew_valid_totcrim_sf %>% 
-  filter(`2019-04` < 50)
-
-# Recompute continuity matrix.
-# lsoa_no_nb <- poly2nb(pl = lsoa_ew_valid_totcrim_no_sf, queen = FALSE)
-# lsoa_no_listW <- nb2listw(lsoa_no_nb, style = "W", zero.policy = TRUE)
-# summary(lsoa_no_listW, zero.policy = TRUE)
-
-nrow(lsoa_ew_valid_totcrim_sf)-nrow(lsoa_ew_valid_totcrim_no_sf) # Only 25 removed.
+# Create new variable with high outliers as missing. 
+total_crime_lsoa_sf <- total_crime_lsoa_sf %>% 
+  mutate(april_no_2019 = replace(x = april_2019, april_2019 > 125, NA),
+         april_no_2020 = replace(x = april_2020, april_2020 > 125, NA))
 
 # Compute Global Moran's I for each April 2019/20.
-moran.test(x = lsoa_ew_valid_totcrim_no_sf$`2019-04`, listw = lsoa_no_listW, zero.policy = TRUE, na.action = na.omit)
-moran.test(x = lsoa_ew_valid_totcrim_no_sf$`2020-04`, listw = lsoa_no_listW, zero.policy = TRUE, na.action = na.omit)
+moran.test(x = total_crime_lsoa_sf$april_no_2019, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
+moran.test(x = total_crime_lsoa_sf$april_no_2020, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
 
-# Create scatterplot for the Global Moran's I.
-moran.plot(x = lsoa_ew_valid_totcrim_no_sf$`2019-04`, listw = lsoa_no_listW, zero.policy = TRUE)
-moran.plot(x = lsoa_ew_valid_totcrim_no_sf$`2020-04`, listw = lsoa_no_listW, zero.policy = TRUE)
+# Create scatterplot for the Global Moran's I. Doesn't like NAs.
+moran.plot(x = total_crime_lsoa_sf$april_no_2019, listw = lsoa_listW, zero.policy = TRUE)
+moran.plot(x = total_crime_lsoa_sf$april_no_2020, listw = lsoa_listW, zero.policy = TRUE)
 
 # Compute Local Moran's I for each April 2019/12.
-april19_lm <- as.data.frame(localmoran(x = lsoa_ew_valid_totcrim_no_sf$`2019-04`, listw = lsoa_no_listW, zero.policy = TRUE, na.action = na.omit))
-april20_lm <- as.data.frame(localmoran(x = lsoa_ew_valid_totcrim_no_sf$`2020-04`, listw = lsoa_no_listW, zero.policy = TRUE, na.action = na.omit))
+april19_lm <- as.data.frame(localmoran(x = total_crime_lsoa_sf$april_2019, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit))
+april20_lm <- as.data.frame(localmoran(x = total_crime_lsoa_sf$april_no_2020, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit))
 
-# Join back with sf object using bind cols, as it's the same order.
-names(april19_lm) <- paste(names(april19_lm), "_19", sep = "")
-names(april20_lm) <- paste(names(april20_lm), "_20", sep = "")
+# Rename variable in each to identify them within the sf object.
+names(april19_lm) <- c("ii_2019", "e_ii_2019", "var_ii_2019", "z_ii_2019", "p_2019")
+names(april20_lm) <- c("ii_2020", "e_ii_2020", "var_ii_2020", "z_ii_2020", "p_2020")
 
-lsoa_ew_valid_totcrim_no_sf <- bind_cols(lsoa_ew_valid_totcrim_no_sf, april19_lm, april20_lm)
+notsig <- filter(april19_lm, p_2019 > 0.05)
+nrow(notsig)
+
+total_crime_lsoa_sf <- bind_cols(total_crime_lsoa_sf, april19_lm, april20_lm)
+
+# Create classification.
+
+
+
+
 
 # Note we are using https://maczokni.github.io/crimemapping_textbook_bookdown/global-and-local-spatial-autocorrelation.html#generating-and-visualising-the-lisa-measures
 # as the main resource for this analysis.
