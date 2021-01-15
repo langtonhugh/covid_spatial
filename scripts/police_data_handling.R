@@ -383,15 +383,15 @@ total_crime_lsoa_df <- sub_data_agg_1920_df %>%
   rename(april_2019 = `2019-04`,
          april_2020 = `2020-04`)
 
+# Save and load workspace as appropriate.
+# save.image(file = "data_handling.RData")
+load(file = "data_handling.RData")
+
 # Join with the sf object.
 total_crime_lsoa_sf <- left_join(lsoa_ew_valid_sf, total_crime_lsoa_df, by = c("geo_code" = "lsoa_code"))
 
 # Save for checks in GeoDa.
 st_write(obj = total_crime_lsoa_sf, dsn = "data/total_crime_lsoa_sf.shp")
-
-# Save and load workspace as appropriate.
-# save.image(file = "data_handling.RData")
-load(file = "data_handling.RData")
 
 # Check distribution for 2019.
 ggplot(data = total_crime_lsoa_sf) +
@@ -412,11 +412,16 @@ table(total_crime_lsoa_sf$april_2020)  # 1142 zeros
 # Create new variable with high outliers as missing. 
 total_crime_lsoa_sf <- total_crime_lsoa_sf %>% 
   mutate(april_no_2019 = replace(x = april_2019, april_2019 > 125, NA),
-         april_no_2020 = replace(x = april_2020, april_2020 > 125, NA))
+         april_no_2020 = replace(x = april_2020, april_2020 > 125, NA)) %>%
+  filter(april_no_2019 != 0)
+
+ggplot(data = total_crime_lsoa_sf) +
+  geom_histogram(mapping = aes(x = log(april_no_2019)))
+
 
 # Compute Global Moran's I for each April 2019/20.
-moran.test(x = total_crime_lsoa_sf$april_no_2019, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
-moran.test(x = total_crime_lsoa_sf$april_no_2020, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
+moran.test(x = total_crime_lsoa_sf$april_2019, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
+moran.test(x = total_crime_lsoa_sf$april_2020, listw = lsoa_listW, zero.policy = TRUE, na.action = na.omit)
 
 # Create scatterplot for the Global Moran's I. Doesn't like NAs.
 moran.plot(x = total_crime_lsoa_sf$april_no_2019, listw = lsoa_listW, zero.policy = TRUE)
