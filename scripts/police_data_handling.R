@@ -1,4 +1,5 @@
 # Load packages.
+library(cowplot)
 library(lorenzgini)
 library(spdep)
 library(readr)
@@ -229,6 +230,24 @@ sum(is.na(sub_data_agg_2019$urban_rural))
 # Append to spatial data.
 lsoa_ew_valid_sf <- left_join(lsoa_ew_valid_sf, urban_df, by = c("geo_code" = "lsoa11cd"))
 
+# Create notifiable offences (minus Drugs) df for each April.
+notif_off_lsoa_df <- sub_data_agg_1920_df %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month == "2020-04" | month == "2019-04") %>% 
+  group_by(lsoa_code, month) %>% 
+  summarise(ew_crime_count = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(crime_type = "Total crime") %>% 
+  pivot_wider(id_cols = lsoa_code, names_from = month, values_from = ew_crime_count) %>% 
+  rename(april19 = `2019-04`,
+         april20 = `2020-04`)
+  
+# Append to sf object.
+lsoa_ew_valid_not_off_sf <- left_join(lsoa_ew_valid_sf, notif_off_lsoa_df, by = c("geo_code" = "lsoa_code"))
+
+# Save for use in GeoDa.
+st_write(obj = lsoa_ew_valid_not_off_sf, dsn = "data/")
+
 # Combine 2019 and 2029 datasets for next steps.
 sub_data_agg_1920_df <- bind_rows(sub_data_agg_2019, sub_data_agg_2020)
 
@@ -237,13 +256,13 @@ rm(lsoa_ew_sf, sub_data_agg_2019, sub_data_agg_2020)
 
 # Raw counts plot, comparing trends across years, similar to first Crime Science paper.
 
-# First, create a small, identical data frame with total notifiable offences as a 'crime type'.
+# First, create a small, identical data frame with total notifiable offences as a 'crime type' (excluding drugs).
 total_crime_agg_df <- sub_data_agg_1920_df %>%
-  filter(crime_type != "Anti-social behaviour") %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs") %>% 
   group_by(month, year) %>% 
   summarise(ew_crime_count = sum(crime_count)) %>% 
   ungroup() %>% 
-  mutate(crime_type = "Total crime") %>% 
+  mutate(crime_type = "Total crime (excl. drugs)") %>% 
   select(crime_type, year, month, ew_crime_count) %>% 
   separate(month, into = c("year", "month"), sep = "-") %>% 
   filter(month != "01", month != "09", month != "10", month != "11", month != "12") 
@@ -277,12 +296,12 @@ ggsave(plot = raw_counts_gg, filename = "visuals/raw_counts_gg.png", width = 16,
 
 # Calculate E&W-wide Generalized Gini coefficient for notifiable offences, for 2019 and 2020.
 gini_tot_1920_df <- sub_data_agg_1920_df %>%
-  filter(crime_type != "Anti-social behaviour") %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs") %>% 
   group_by(year, month) %>% 
   summarise(gini_coef = gini(crime_count, generalized = TRUE, unbiased = TRUE)) %>% 
   ungroup() %>% 
   separate(month, into = c("year","month"), sep = "-") %>% 
-  mutate(crime_type = "Total crime") %>% 
+  mutate(crime_type = "Total crime (excl. drugs)") %>% 
   select(crime_type, gini_coef, year,  month)
 
 # Do the same but by crime type.
@@ -301,7 +320,7 @@ gini_gg <- ggplot(data = gini_ct_1920_df) +
   geom_vline(xintercept = 1.7, linetype = "dotted") +
   facet_wrap(~ crime_type, ncol = 3) +
   ylim(0, 1) +
-  labs(x = NULL, y = NULL, colour = NULL) +
+  labs(x = NULL, y = "Generalized Gini Coefficient", colour = NULL) +
   scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   scale_color_manual(values = rev(c("black", "darkgrey"))) +
   theme_bw() +
@@ -315,77 +334,369 @@ gini_gg <- ggplot(data = gini_ct_1920_df) +
 # Save.
 ggsave(plot = gini_gg, filename = "visuals/gini_gg.png", width = 14, height = 20, units = "cm", dpi = 600)
 
-# # Initial plot.
-# by_crimtyp_gini_gg <- ggplot(data = gini_1920_df) +
-#   geom_line(mapping = aes(x = month, y = gini_coef, group = crime_type, colour = crime_type)) +
-#   facet_wrap(~ year) +
-#   scale_x_discrete(labels = str_extract(month.name, "^.{3}")) +
-#   labs(x = NULL, y = "Generalized Gini") +
-#   theme_bw() +
-#   theme(legend.text = element_text(size = 5), legend.title = element_blank())
-# 
-# # Save.
-# ggsave(filename = "visuals/by_crimtyp_gini.png", height = 9, width = 25, unit = "cm")
-
-# # Do the same but group by the urban rural distinction.
-# df_1920_rural_gini <- df_1920_df %>%
-#   group_by(Year, Month, `Crime type`, urban_rural) %>% 
-#   summarise(gini_coef = gini(crime_count, generalized = TRUE, unbiased = TRUE)) %>% 
-#   ungroup() %>% 
-#   separate(Month, into = c("Year_temp","Month"), sep = "-") %>% 
-#   select(-Year_temp) 
-# 
-# # Initial plot.
-# rural_gini_gg <- ggplot(data = df_1920_rural_gini) +
-#   geom_line(mapping = aes(x = Month, y = gini_coef, group = `Crime type`, colour = `Crime type`)) +
-#   geom_vline(xintercept = 3.7, linetype = "dotted") +
-#   scale_x_discrete(labels = str_extract(month.name, "^.{3}")) +
-#   facet_wrap(~ urban_rural + Year) +
-#   theme_bw()
-  
-# # Save.
-# ggsave(filename = "visuals/rural_gini.png", height = 16, width = 25, unit = "cm")
-
-# Global Moran's I for E&W.
-
-# # First attempt used GeoDa because it's computationally quick.
-# # Save lsoa_ew_complete_sf object as shapefile for use in GeoDa.
-# st_write(obj = lsoa_ew_valid_sf, dsn = "data/lsoa_ew_valid_sf.shp")
-# # Rook contuinity matrix created in GeoDa Version 1.14.0. Descriptive statistics screenshot
-# # has been saved in the 'img' folder of this project.
-# lsoa_gal <- read.gal(file = "data/lsoa_ew_valid_sf.gal", override.id = TRUE)
-# lsoa_listW <- nb2listw(lsoa_gal, style = "W", zero.policy = TRUE)
-# # Check summary. Zero poly is TRUE because GeoDa warned about an island LSOA (which has no neighbour,
-# # and also no part of the LSOA on mainland - the Isle of Scilly). This is confirmed using spdep.
-# summary(lsoa_listW, zero.policy = TRUE)
-# # We now remove the Isle of Scilly LSOA.
-# lsoa_ew_valid_noisl_sf <- lsoa_ew_valid_sf %>%
-#   filter(geo_code != "E01019077")
-
-# Creating queens continuity matrix is problematic due to memory. Due to the shape of LSOAs, I don't think
-# it is even necessary, so we use rook.
-lsoa_nb <- poly2nb(pl = lsoa_ew_valid_sf, queen = FALSE)
-lsoa_listW <- nb2listw(lsoa_nb, style = "W", zero.policy = TRUE)
-summary(lsoa_listW, zero.policy = TRUE) # average number of links ~5.7
-lsoa_ew_valid_sf[1285, ] # Isle of Scilly is the neighborless LSOA.
-
-# First, let's run Global/Local Moran's I comparing April 2019 and April 2020. 
-
-# Calculate total notifiable offences per LSOA.
-total_crime_lsoa_df <- sub_data_agg_1920_df %>%
-  filter(crime_type != "Anti-social behaviour", 
-         month == "2019-04" | month == "2020-04") %>% 
-  group_by(month, lsoa_code) %>% 
-  summarise(total_crime = sum(crime_count)) %>% 
-  ungroup() %>% 
-  complete(month, lsoa_code, fill = list(total_crime = 0)) %>% 
-  pivot_wider(id_cols = lsoa_code, names_from = month, values_from = total_crime) %>% 
-  rename(april_2019 = `2019-04`,
-         april_2020 = `2020-04`)
-
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling.RData")
 load(file = "data_handling.RData")
+
+# Use longitudinal k-means to unpick the total noficiable crimes (excl. drugs trend) at LSOA level.
+total_crime_kmeans_df <- sub_data_agg_1920_df %>%
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month != "2019-12") %>% 
+  group_by(lsoa, month, year) %>% 
+  summarise(ew_crime_count = sum(crime_count)) %>% 
+  ungroup() %>% 
+
+
+# We know that the most change occurred in April, across all crimes types.
+# But what areas were driving this change? Was it previously criminal areas?
+# Here, we calculate which LSOAs are driving the change observed in April.
+
+# Note that we create a count+1 variable for the Poisson test.
+aprils_lsoa_df <- sub_data_agg_1920_df %>%
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month == "2019-04" | month == "2020-04") %>%
+  group_by(lsoa_code, month) %>% 
+  summarise(cc_total   = sum(crime_count)) %>% 
+  mutate(cc_total_plus = cc_total+1) %>% 
+  group_by(month) %>%
+  mutate(decile = ntile(cc_total_plus, 10)) %>%
+  ungroup() %>%
+  arrange(decile)
+
+# How much have the deciles changed?
+aprils_lsoa_wide_df <- aprils_lsoa_df %>%
+  pivot_wider(id_cols = lsoa_code, names_from = "month", values_from = "decile") %>% 
+  rename(april19 = `2019-04`,
+         april20 = `2020-04`) %>% 
+  mutate(change_or_not = if_else(april19 == april20, "no_change", "changed"),
+         up_or_not     = if_else(april19 < april20 , "up_decile", "down_or_no_change"))
+
+table(aprils_lsoa_wide_df$change_or_not)
+round(prop.table(table(aprils_lsoa_wide_df$change_or_not)), 2)
+
+table(aprils_lsoa_wide_df$up_or_not)
+round(prop.table(table(aprils_lsoa_wide_df$up_or_not)), 2)
+
+# Check number of deciles. Each LSOA has been allocated to a decile for April 2019 and 2020 respectively.
+table(aprils_lsoa_df$decile) 
+
+# Calculate mean counts occuring in each decile, in each month.
+decile_means_df <- aprils_lsoa_df %>% 
+  group_by(decile, month) %>% 
+  summarise(mean_dec_cc_plus = mean(cc_total_plus)) %>% 
+  mutate(mean_dec_cc_plus = round(mean_dec_cc_plus)) %>% 
+  arrange(month, decile)
+
+# Check visually.
+ggplot(data = decile_means_df) +
+  geom_bar(mapping = aes(x = decile, y = mean_dec_cc_plus), stat = "identity") +
+  facet_wrap(~ month)
+
+# Now we need to link the LSOAs in each decile from 2019, to the counts for 2020.
+april19_df <- aprils_lsoa_df %>% 
+  filter(month == "2019-04")
+
+april20_df <- aprils_lsoa_df %>% 
+  filter(month == "2020-04") %>% 
+  select(lsoa_code, month, cc_total, cc_total_plus) %>% 
+  rename(cc_total_20      = cc_total,
+         cc_total_plus_20 = cc_total_plus,
+         month_20         = month)
+
+# Join back with the 2019 deciles.
+april19_joined_df <- left_join(april19_df, april20_df)
+
+# Check distirbutions.
+ggplot(data = filter(april19_joined_df, cc_total_plus < 125)) +
+  geom_histogram(mapping = aes(x = cc_total_plus), bins = 100) 
+
+ggplot(data = filter(april19_joined_df, cc_total_plus_20 < 125)) +
+  geom_histogram(mapping = aes(x = cc_total_plus_20), bins = 100) 
+
+# Create mean counts for each April (2019 and 2020) by the 2019 deciles.
+# Removing outliers >125 does not change results.
+decile_means_19 <- april19_joined_df %>%
+  group_by(decile) %>% 
+  summarise(mean_dec_count19 = round(mean(cc_total_plus)))
+
+decile_means_20 <- april19_joined_df %>% 
+  group_by(decile) %>% 
+  summarise(mean_dec_count20 = round(mean(cc_total_plus_20))) %>% 
+  select(-decile)
+
+# Bind together, then into list, for poisson test.
+decile_means_df <- bind_cols(decile_means_19, decile_means_20)
+decile_means_list <- group_split(decile_means_df, decile)
+
+perc_changes <- paste(round(100*(decile_means_df$mean_dec_count20-decile_means_df$mean_dec_count19)/decile_means_df$mean_dec_count19),
+                      "%", sep = "")
+
+# Run poisson text through list.
+lapply(decile_means_list, function(x){poisson.test(c(x$mean_dec_count19, x$mean_dec_count20))})
+
+# Visualise the change descriptively. 
+deciles_tot_gg <- april19_joined_df %>%
+  select(-month, -cc_total, -cc_total_20, -month_20) %>%
+  pivot_longer(cols = c(-lsoa_code, -decile), values_to = "counts", names_to = "year") %>% 
+  group_by(year, decile) %>% 
+  summarise(mean_counts = round(mean(counts))) %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = as.factor(decile), y = mean_counts, group = year, fill = year),
+           stat = "identity", position = "dodge") +
+  scale_fill_discrete(labels = c("April 2019", "April 2020"), direction = -1) +
+  labs(fill = NULL,  y = "Mean recorded crimes", x = "LSOA crime decile in April 2019",
+       title = "Notifiable offences in England and Wales", caption = "Drug offences excluded") +
+  theme_bw()
+
+deciles_tot_an_gg <- deciles_tot_gg +
+  annotate(geom = "curve", x = 0.5, xend = 9.5, y = 25, yend = 25, curvature = 0) +
+  annotate(geom = "curve", x = 0.5, xend = 0.5, y = 25, yend = 23, curvature = 0) +
+  annotate(geom = "curve", x = 9.5, xend = 9.5, y = 25, yend = 23, curvature = 0) +
+  annotate(geom = "text" , x = 4, y = 27, label = "No stat. sig. change", size = 3) +
+  annotate(geom = "curve", x = 8.5, xend = 10, y = 35, yend = 23, curvature = -0.2, arrow = arrow(length = unit(1, "mm"))) +
+  annotate(geom = "text" , x = 7.4, y = 36, label = "Stat. sig. change", size = 3) +
+  annotate(geom = "text" , x = 1 , y = 6, label = paste("+", perc_changes[1], sep = ""), size = 3) +
+  annotate(geom = "text" , x = 2 , y = 7, label = paste("+", perc_changes[2], sep = ""), size = 3) +
+  annotate(geom = "text" , x = 3 , y = 8, label = paste("+", perc_changes[3], sep = ""), size = 3) +
+  annotate(geom = "text" , x = 4 , y = 9, label = perc_changes[4] , size = 3) +
+  annotate(geom = "text" , x = 5 , y = 10, label = perc_changes[5] , size = 3) +
+  annotate(geom = "text" , x = 6 , y = 12, label = perc_changes[6] , size = 3) +
+  annotate(geom = "text" , x = 7 , y = 14, label = perc_changes[7] , size = 3) +
+  annotate(geom = "text" , x = 8 , y = 17, label = perc_changes[8] , size = 3) +
+  annotate(geom = "text" , x = 9 , y = 22, label = perc_changes[9] , size = 3) +
+  annotate(geom = "text" , x = 10, y = 46, label = perc_changes[10], size = 3) 
+  
+ggsave(plot = deciles_tot_an_gg, filename = "visuals/deciles_tot_an_gg.png", height = 12, width = 18, unit = "cm")
+
+# Create this crime distinciton in the main df.
+crime_cats_1920_df <- sub_data_agg_1920_df %>% 
+  filter(crime_type != "Drugs") %>% 
+  mutate(crime_cat = if_else(condition = crime_type != "Anti-social behaviour", "Notifiable", crime_type))
+
+# Spearman's rank between deciles.
+cor_prep_list <- sub_data_agg_1920_df %>% 
+  filter(month == "2019-04" | month == "2020-04") %>% 
+  select(crime_type, month, lsoa_code, crime_count) %>% 
+  group_split(crime_type) 
+
+# Calculate Spearman's Rank correlation *between months of different years*.
+table(sub_data_agg_1920_df$month)
+
+# Remove December 2019 (until December 2020 is released), and split into list of df by crime type.
+cor_prep_list <- sub_data_agg_1920_df %>% 
+  filter(month != "2019-12") %>% 
+  select(crime_type, month, lsoa_code, crime_count) %>% 
+  group_split(crime_type) 
+
+# Add names.
+names(cor_prep_list) <- unique(sub_data_agg_1920_df$crime_type)
+
+# Function to pivot each df in list long to wide.
+cor_prep_fun <- function(x) {
+  x %>% 
+    select(-crime_type) %>% 
+    pivot_wider(id_cols = lsoa_code, names_from = month, values_from = crime_count) %>% 
+    select(-lsoa_code)
+}
+
+# Run function through list of df.
+cor_output_list <- lapply(cor_prep_list, cor_prep_fun)
+
+# Spearman's rank correlation on each.
+cor_results_list <- lapply(cor_output_list, function(x){as_tibble(round(cor(x = x, method = "spearman"), 2))})
+
+# Create month variable for each correlation table.
+cor_results_pull_list <- lapply(cor_results_list, function(x){x %>%
+    mutate(month_lag = names(.)) %>% 
+    relocate(month_lag, .before = `2019-01`) %>% 
+    slice(12:22) %>% 
+    select(1:12) })
+
+# Save each.
+names(cor_results_pull_list) 
+for(i in seq_along(cor_results_pull_list))
+  write_csv(x = cor_results_pull_list[[i]], path = paste0("results/", names(cor_results_pull_list)[i], "_month_cor", ".csv"))
+
+# # Retrieve the diagnal, which compared the same months of different years.
+# cor_results_sub_list <- lapply(cor_results_list, function(x){diag(as.matrix(x[, -1]))})
+# 
+# # Stick together and create id column. Rows are in the order of months.
+# cor_results_sub_df <- cor_results_sub_list %>% 
+#   bind_rows() %>%
+#   mutate(cor_compare = names(cor_results_list[[1]]))
+# 
+# 
+# # Heat map does not work due to varying degrees of correlation by crime type. It masks
+# # changes which -by crime type- are quite important.
+# df <- cor_results_sub_df %>% 
+#   mutate(months_id = month.name[1:11]) %>% 
+#   pivot_longer(cols = "crime_type")
+
+# Now move to MSOA. We are not pretending to do 'micro crime analysis', it's a national overview, so it
+# will help in almost every aspect (e.g. zero counts, computation, maps).
+
+# Download MSOA look-up table from ONS.
+# download.file(url = "https://opendata.arcgis.com/datasets/fe6c55f0924b4734adf1cf7104a0173e_0.csv",
+#               destfile = "data/census_unit_lookup.csv")
+
+# Load.
+lookup_df <- read_csv("data/census_unit_lookup.csv")
+
+# Only keep unique LSOA, subset for those in the crime data, and select columns needed.
+lookup_lsoa_df <- lookup_df %>% 
+  clean_names() %>% 
+  distinct(lsoa11cd, .keep_all = TRUE) %>% 
+  filter(lsoa11cd %in% sub_data_agg_1920_df$lsoa_code) %>% 
+  select(lsoa11cd, msoa11cd, msoa11nm, lad17cd, lad17nm) %>% 
+  rename(msoa_code = msoa11cd)
+
+# Join with crime data, and aggregate counts by MSOA.
+msoa_agg_1920_df <- sub_data_agg_1920_df %>% 
+  left_join(lookup_lsoa_df, by = c("lsoa_code" = "lsoa11cd")) %>%
+  group_by(crime_type, year, month, msoa_code) %>% 
+  summarise(cc_msoa = sum(crime_count)) %>% 
+  ungroup()
+
+# Recalculate Gini for MSOA units.
+gini_msoa_tot_1920_df <- msoa_agg_1920_df %>%
+  filter(crime_type != "Anti-social behaviour") %>% 
+  group_by(year, month) %>% 
+  summarise(gini_coef = gini(cc_msoa, generalized = TRUE, unbiased = TRUE)) %>% 
+  ungroup() %>% 
+  separate(month, into = c("year","month"), sep = "-") %>% 
+  mutate(crime_type = "Total crime") %>% 
+  select(crime_type, gini_coef, year,  month)
+
+# Do the same but by crime type.
+gini_ct_msoa_1920_df <- msoa_agg_1920_df %>%
+  group_by(year, month, crime_type) %>% 
+  summarise(gini_coef = gini(cc_msoa, generalized = TRUE, unbiased = TRUE)) %>% 
+  ungroup() %>% 
+  separate(month, into = c("year","month"), sep = "-") %>%
+  bind_rows(gini_msoa_tot_1920_df) %>% 
+  filter(month != "01", month != "09", month != "10", month != "11", month != "12") %>% 
+  mutate(year = recode_factor(year, "2019" = "2019", "2020" = "2020")) 
+
+# Facet plot.
+gini_msoa_gg <- ggplot(data = gini_ct_msoa_1920_df) +
+  geom_line(mapping = aes(x = month, y = gini_coef, group = year, colour = year), size = 0.8) +
+  geom_vline(xintercept = 1.7, linetype = "dotted") +
+  facet_wrap(~ crime_type, ncol = 3) +
+  ylim(0, 1) +
+  labs(x = NULL, y = NULL, colour = NULL) +
+  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  scale_color_manual(values = rev(c("black", "darkgrey"))) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 6, hjust = -0.5),
+        axis.ticks = element_line(size = 0.3, lineend = "round"),
+        axis.text.y = element_text(size = 6),
+        strip.text = element_text(size = 8),
+        strip.background = element_rect(fill = "transparent"),
+        legend.position = "bottom")
+
+# Save.
+ggsave(plot = gini_msoa_gg, filename = "visuals/gini_msoa_gg.png", width = 14, height = 20, units = "cm", dpi = 600)
+
+# Deciles.
+aprils_msoa_df <- msoa_agg_1920_df %>%
+  filter(crime_type == "Theft from the person", 
+         month == "2019-04" | month == "2020-04") %>%
+  group_by(month) %>%
+  arrange(cc_msoa) %>%
+  mutate(decile = ntile(cc_msoa, 10)) %>%
+  ungroup() %>%
+  arrange(decile)
+
+aprils_msoa_df %>% 
+  group_by(decile) %>% 
+  summarise(mean_cc = mean(cc_msoa))
+
+# Long to wide for comparison.
+aprils_msoa_wide_df <- aprils_msoa_df %>% 
+  pivot_wider(id_cols = msoa_code, names_from = month, values_from = c(cc_msoa, decile)) %>% 
+  rename(cc_april19 = `cc_msoa_2019-04`,
+         cc_april20 = `cc_msoa_2020-04`,
+         dc_april19 = `decile_2019-04`,
+         dc_april20 = `decile_2020-04`) %>% 
+  mutate(cc_diff    = cc_april20-cc_april19,
+         perc_diff  = 100*(cc_diff/cc_april19)) 
+
+
+ggplot(data = aprils_msoa_wide_df) +
+  geom_boxplot(mapping = aes(x = as.factor(dc_april19),
+                             y = cc_diff,
+                             group = dc_april19), outlier.shape = NA) +
+  geom_jitter(mapping = aes(x = as.factor(dc_april19),
+                            y = cc_diff,
+                            group = dc_april19,
+                            colour = as.factor(dc_april19)),
+              alpha = 0.3, pch = 20, size = 1) +
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(-20, 5))
+
+# p1 <- ggplot(data = filter(aprils_msoa_wide_df, perc_diff < 1000)) +
+#   geom_boxplot(mapping = aes(x = as.factor(dc_april19), y = perc_diff, group = dc_april19))
+# 
+# p2 <- ggplot(data = filter(aprils_msoa_wide_df, perc_diff < 1000)) +
+#   geom_boxplot(mapping = aes(x = as.factor(dc_april19), y = cc_diff, group = dc_april19))
+
+ggplot(data = filter(aprils_msoa_wide_df)) +
+  geom_boxplot(mapping = aes(x = as.factor(dc_april19), y = cc_diff, group = dc_april19))
+
+april_change_gg <- plot_grid(p1, p2, nrow = 2)
+
+ggsave(plot = april_change_gg, filename = "visuals/april_change_gg.png", width = 10, height = 10, unit = "cm")  
+
+# Calculate percentage changes in crime for rural/urban classifications.
+aprils_lsoa_df <- sub_data_agg_1920_df %>%
+  filter(crime_type == "Anti-social behaviour", 
+         month == "2019-04" | month == "2020-04") %>%
+  group_by(month) %>%
+  arrange(crime_count) %>%
+  mutate(decile = ntile(crime_count, 10)) %>%
+  ungroup() %>%
+  arrange(decile)
+
+aprils_lsoa_df %>% 
+  group_by(decile) %>% 
+  summarise(mean_cc = mean(crime_count))
+
+ggplot(data = aprils_lsoa_df) +
+  geom_bar(mapping = aes(x = as.factor(decile), y = crime_count), stat = "identity") +
+  facet_wrap(~month)
+
+# Calculate difference between April 2019 and April 2020 for each LSOA.
+aprils_lsoa_wide_df <- aprils_lsoa_df %>% 
+  select(crime_type, month, lsoa_code, urban_rural, crime_count, decile) %>% 
+  pivot_wider(id_cols = lsoa_code, names_from = month, values_from = c(crime_count, decile)) %>%
+  rename(cc_april19 = `crime_count_2019-04`,
+         cc_april20 = `crime_count_2020-04`,
+         dc_april19 = `decile_2019-04`,
+         dc_april20 = `decile_2020-04`) %>%
+  mutate(diff_april = cc_april20-cc_april19) %>%
+  left_join(urban_df, by = c("lsoa_code" = "lsoa11cd")) %>% 
+  group_by(dc_april19) %>% 
+  summarise(mean_diff_april = mean(diff_april)) %>% 
+  ungroup()
+
+ggplot(data = aprils_lsoa_wide_df) +
+  geom_bar(mapping = aes(x = as.factor(dc_april19), y = mean_diff_april), stat = "identity")
+  
+table(aprils_lsoa_wide_df$cc_april19) # 7000 LSOAs have zero ASB in April 2019 (~21%).
+table(aprils_lsoa_wide_df$cc_april20) # 3300 LSOAs have zero ASB in April 2020.
+
+# Descriptives
+# aprils_lsoa_wide_df %>% 
+#   group_by(ruc11) %>%
+#   summarise(mean19 = mean(`2019-04`),
+#             mean20 = mean(`2020-04`))
+# 
+# aprils_lsoa_wide_df %>% 
+#   group_by(ruc11) %>%
+#   summarise(diff19 = mean(`2020-04`-`2019-04`))
+# 
+# poisson.test(x = c(1, 32), T = c(1,1), alternative = "greater")
+
 
 # Join with the sf object.
 total_crime_lsoa_sf <- left_join(lsoa_ew_valid_sf, total_crime_lsoa_df, by = c("geo_code" = "lsoa_code"))
@@ -484,23 +795,6 @@ test <- lsoa_ew_valid_totcrim_no_sf %>%
 # Next step: remove zeros.
 
 
-
-
-# # Create deciles for ASB as a test:
-# asb_2020_df <- df_2020_sub_agg %>% 
-#   filter(`Crime type` == "Anti-social behaviour") %>% 
-#   group_by(Month) %>% 
-#   arrange(crime_count) %>% 
-#   mutate(decile = ntile(crime_count, 10)) %>% 
-#   ungroup() %>% 
-#   arrange(decile)
-# 
-# # How many ASB counts in each LSOA, on each month?
-# nrow(filter(asb_2020_df, crime_count == 0)) # 69k zeros (19%)
-# nrow(filter(asb_2020_df, crime_count == 1)) # 62k one crime count (17%)
-#   
-# # Many zeros and low counts. Percentage change analysis at this level would not be insightful or useful.
-# # Talking about decile change would also be odd, because so many are 'draws'.
 
 
 

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1611219888870.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "953155001",
+    "id" : "29614E65",
+    "lastKnownWriteTime" : 1611219917,
+    "last_content_update" : 1611219917425,
+    "path" : "~/GitHub/covid_spatial/scripts/spatial.R",
+    "project_path" : "scripts/spatial.R",
+    "properties" : {
+        "cursorPosition" : "36,31",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
