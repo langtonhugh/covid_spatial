@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1611252742028.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1067291826",
+    "id" : "C5610376",
+    "lastKnownWriteTime" : 1611252764,
+    "last_content_update" : 1611252764351,
+    "path" : "~/GitHub/covid_spatial/scripts/asb_kmeans.R",
+    "project_path" : "scripts/asb_kmeans.R",
+    "properties" : {
+        "cursorPosition" : "72,0",
+        "scrollLine" : "54",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
