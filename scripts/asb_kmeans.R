@@ -82,8 +82,8 @@ tc_asb_clusters_props_df <- tc_asb_clusters_df %>%
 
 # Plot stacks
 tc_asb_props_gg <- ggplot(data = tc_asb_clusters_props_df) +
-  geom_area(mapping = aes(x = month_fac, y = sum_monthly_props, group = traj_titles, fill = traj_titles),
-            alpha = 0.8) +
+  geom_bar(mapping = aes(x = month_fac, y = sum_monthly_props, group = traj_titles, fill = traj_titles),
+            alpha = 0.8, stat = "identity") +
   scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   labs(x = NULL, y = "% total ASB", fill = NULL) +
   theme_bw() +

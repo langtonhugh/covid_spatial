@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Background
 
 - Overview of findings on lockdown crime to date.
-- Note that a key component missing relates to spatial concentrations, and the extent to which macro-level trends mask underlying, localized variation.
+- Note that a key missing component relates to spatial concentrations, and the extent to which macro-level trends mask underlying, localized variation.
 - These discussions have proved vital to crime and place research, and our understanding of criminal opportunity and routine activities theory (e.g. law of crime concentration).
 - Localized analysis may also shed light on policing and resource allocation during lockdown.
 - In England and Wales, we already have a reasonable understanding of the macro-level trends.
@@ -61,13 +61,37 @@ knitr::include_graphics("visuals/deciles_asb_an_gg.png")
 
 ### Longitudinal clustering
 
+#### Notifiable offences
+
+- General conclusion: most of the lockdown crime drop can be attributed to a small number LSOAs.
+- Most localized areas actually experienced minimal crime change during the pandemic.
+- The proportion of total crime attributable to very low and very high crime clusters fell into April, while mid-crime areas increased their proportion.
+- All clusters converged back to 'normality' by the end of August.
+- Remarkable stability given the absolute change that occurred during this study period.
+
 ```{r kmeansnotoff, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA notifiable offences.", out.width= "90%"}
 knitr::include_graphics("visuals/kmeans_violin_gg.png")
 ```
 
+```{r kmeansnotoffbar, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions. Proportion of total crime attributable to each cluster.", out.width= "90%"}
+knitr::include_graphics("visuals/tc_props_gg.png")
+```
+
+### Anti-social behaviour
+
+- The increase in ASB appears to have been experienced uniformly across clusters.
+- As with notifiable offences, the proportion of total crime attributable to very low and very high ASB clusters fell during the start of lockdown.
+- It is the mid-cluster, comprising only 23% of LSOAs in England and Wales, that swelled in April.
+- That said, there has still be remarkable stability, given the dramatic change that occurred.
+
 ```{r kmeansasb, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA ASB.", out.width= "90%"}
 knitr::include_graphics("visuals/kmeans_violin_asb_gg.png")
 ```
+
+```{r kmeansasbbar, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA ASB.", out.width= "90%"}
+knitr::include_graphics("visuals/tc_asb_props_gg.png")
+```
+
 
 ### Spatial distribution of clusters
 
