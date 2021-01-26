@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1611670422958.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "AFF40E84",
+    "lastKnownWriteTime" : 1611670401,
+    "last_content_update" : 1611670422958,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "97418C38",
+        "caption" : "tc_clusters_df",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=tc_clusters_df&cache_key=97418C38",
+        "displayedObservations" : "198450",
+        "environment" : "",
+        "expression" : "tc_clusters_df",
+        "object" : "tc_clusters_df",
+        "preview" : "0",
+        "totalObservations" : "198450",
+        "variables" : "17"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

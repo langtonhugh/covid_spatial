@@ -443,6 +443,90 @@ ggsave(plot = tc_props_gg, filename = "visuals/tc_props_gg.png",
 # save.image(file = "data_handling.RData")
 load(file = "data_handling.RData")
 
+# What are the characteristics of these clusters?
+
+# Urban-rural classification.
+tc_clusters_df <- tc_clusters_df %>%
+  left_join(urban_df, by = c("lsoa_code" = "lsoa11cd"))
+
+urban_gg <- tc_clusters_df %>%
+  group_by(traj_titles) %>% 
+  mutate(n_traj = n()) %>% 
+  ungroup() %>% 
+  group_by(traj_titles, ruc11) %>% 
+  summarise(n_ruc11 = n(),
+            prop_ruc11 = n_ruc11/n_traj) %>% 
+  ungroup() %>% 
+  distinct(traj_titles, ruc11, prop_ruc11) %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = traj_titles, y = prop_ruc11, fill = ruc11), stat = "identity", alpha = 0.7) +
+  guides(fill = guide_legend(nrow = 3)) +
+  scale_fill_brewer(palette = "RdYlGn", direction = -1) +
+  labs(x = NULL, y = "Proportion of cluster", fill = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+ggsave(plot = urban_gg, filename = "visuals/urban_gg.png", height = 20, width = 20, unit = "cm")
+
+# Deprivation
+
+# Download 2019 IMD.
+# download.file(url = "https://opendata.arcgis.com/datasets/d4b79be994ac4820ad44e10ded313df3_0.csv",
+#               destfile = "data/e_imd_lsoa.csv")
+# 
+# download.file(url = "http://geoportal1-ons.opendata.arcgis.com/datasets/b4fddfae9a0a4259ade22cab349208f7_0.csv",
+#               destfile = "data/w_imd_lsoa.csv")
+
+# Load data.
+e_imd_df <- read_csv("data/e_imd_lsoa.csv")
+w_imd_df <- read_csv("data/w_imd_lsoa.csv")
+
+# Make comparable
+e_imd_df <- e_imd_df %>% 
+  select(lsoa11cd, IMDRank, IMDDecil) 
+
+w_imd_df <- w_imd_df %>% 
+  select(lsoa11cd, wimd_2019) %>% 
+  rename(IMDDRank = wimd_2019) %>% 
+  mutate(IMDDecil = as.numeric(ntile(IMDDRank, 10)))
+  
+# Check names
+names(e_imd_df)
+names(w_imd_df)
+
+# Combine
+ew_imd_df <- bind_rows(e_imd_df, w_imd_df)
+
+# Join.
+tc_clusters_dec_df <- tc_clusters_df %>% 
+  left_join(ew_imd_df, by = c("lsoa_code" = "lsoa11cd")) %>% 
+  filter(IMDDecil != 0)
+
+# Check.
+table(tc_clusters_dec_df$IMDDecil)
+
+# Plot.
+decile_gg <- tc_clusters_dec_df %>%
+  group_by(traj_titles) %>% 
+  mutate(n_traj = n(),
+         IMDDecil = as.factor(IMDDecil)) %>% 
+  ungroup() %>% 
+  group_by(traj_titles, IMDDecil) %>% 
+  summarise(n_decile = n(),
+            prop_decile = n_decile/n_traj) %>% 
+  ungroup() %>% 
+  distinct(traj_titles, IMDDecil, prop_decile) %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = traj_titles, y = prop_decile, fill = IMDDecil), stat = "identity", alpha = 0.9) +
+  scale_fill_brewer(palette = "Spectral") +
+  guides(fill = guide_legend(nrow = 1)) +
+  labs(x = NULL, y = "Proportion of cluster", fill = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# Save.
+ggsave(plot = decile_gg, filename = "visuals/decile_gg.png", height = 20, width = 20, unit = "cm")
+
 # We know that the most change occurred in April, across all crimes types.
 # But what areas were driving this change? Was it previously criminal areas?
 # Here, we calculate which LSOAs are driving the change observed in April.
