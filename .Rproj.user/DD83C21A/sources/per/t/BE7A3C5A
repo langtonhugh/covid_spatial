@@ -5,14 +5,14 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "1710772558",
+    "hash" : "1895326883",
     "id" : "BE7A3C5A",
-    "lastKnownWriteTime" : 1611768947,
-    "last_content_update" : 1611768947573,
+    "lastKnownWriteTime" : 1611769148,
+    "last_content_update" : 1611769148806,
     "path" : "~/GitHub/covid_spatial/draft_paper.Rmd",
     "project_path" : "draft_paper.Rmd",
     "properties" : {
-        "cursorPosition" : "72,3",
+        "cursorPosition" : "75,0",
         "scrollLine" : "62",
         "tempName" : "Untitled1"
     },
