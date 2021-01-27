@@ -416,6 +416,9 @@ kmeans_violin_gg <- ggplot(data = tc_clusters_df,
 ggsave(plot = kmeans_violin_gg, filename = "visuals/kmeans_violin_gg.png",
        height = 20, width = 20, unit = "cm", dpi = 200)
 
+# Add 2019 years to it.
+
+
 # Create proportion contribution to total crime in each month.
 tc_clusters_props_df <- tc_clusters_df %>%
   group_by(month_fac) %>% 
@@ -439,11 +442,108 @@ tc_props_gg <- ggplot(data = tc_clusters_props_df) +
 ggsave(plot = tc_props_gg, filename = "visuals/tc_props_gg.png",
        height = 14, width = 16, unit = "cm", dpi = 200)
 
+# Calculate the % of month-on-month change each cluster contributed to.
+change_df <- tc_clusters_df %>% 
+  select(lsoa_code, month, traj_titles, ew_crime_counts) %>% 
+  group_by(month, traj_titles) %>%
+  summarise(traj_crimes = sum(ew_crime_counts)) %>%
+  ungroup() %>%
+  group_by(month) %>%
+  mutate(total_crimes = sum(traj_crimes)) %>% 
+  pivot_wider(id_cols = traj_titles, names_from = month, values_from = c(traj_crimes, total_crimes)) %>% 
+  mutate(tot_mar_apr  = total_crimes_april-total_crimes_march,
+         tot_apr_may  = total_crimes_may-total_crimes_april,
+         tot_may_jun  = total_crimes_june-total_crimes_may,
+         tot_jun_jul  = total_crimes_july-total_crimes_june,
+         tot_jul_aug  = total_crimes_august-total_crimes_july,
+         traj_mar_apr = traj_crimes_april-traj_crimes_march,
+         traj_apr_may = traj_crimes_may-traj_crimes_april,
+         traj_may_jun = traj_crimes_june-traj_crimes_may,
+         traj_jun_jul = traj_crimes_july-traj_crimes_june,
+         traj_jul_aug = traj_crimes_august-traj_crimes_july,
+         prop_mar_apr = traj_mar_apr/tot_mar_apr,
+         prop_apr_may = traj_apr_may/tot_apr_may,
+         prop_may_jun = traj_may_jun/tot_may_jun,
+         prop_jun_jul = traj_jun_jul/tot_jun_jul,
+         prop_jul_aug = traj_jul_aug/tot_jul_aug) %>% 
+  select(traj_titles, prop_mar_apr:prop_jul_aug) %>% 
+  pivot_longer(cols = -traj_titles, names_to = "month_change", values_to = "percentage_change") %>% 
+  mutate(month_change = fct_relevel(month_change,
+                                    "prop_mar_apr",
+                                    "prop_apr_may",
+                                    "prop_may_jun",
+                                    "prop_jun_jul",
+                                    "prop_jul_aug")) 
+
+# Percentage change plot.
+change_gg <- ggplot(data = change_df,
+       mapping = aes(x = month_change, y = percentage_change,
+                     group = traj_titles, colour = traj_titles), stat = "identity") +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  scale_y_continuous(breaks = c(-0.25, 0, 0.25, 0.50, 0.75, 1), labels = scales::percent) +
+  scale_x_discrete(labels = c("March to April", "April to May", "May to June", "June to July",
+                              "July to August")) +
+  labs(y = "Percentage change attributable to cluster", x = NULL, colour = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+  
+# Save.
+ggsave(plot = change_gg, filename = "visuals/change_gg.png", width = 16, height = 16, unit = "cm")
+
+# Crime composition of each cluster.
+# Only keep what's needed.
+tc_clusters_sub_df <- tc_clusters_df %>% 
+  select(lsoa_code, traj) %>% 
+  distinct(lsoa_code, traj)
+  
+# Join back with crime data.
+traj_crime_types_df <- sub_data_agg_1920_df %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs") %>% 
+  left_join(tc_clusters_sub_df, by = "lsoa_code")
+
+# Calculate
+traj_crime_types_chars_df <- traj_crime_types_df %>% 
+  group_by(traj) %>% 
+  mutate(traj_crimes = sum(crime_count)) %>%
+  ungroup() %>% 
+  group_by(crime_type, traj) %>% 
+  mutate(traj_ct_crime = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(traj_ct_crime_prop = traj_ct_crime/traj_crimes) %>% 
+  distinct(crime_type, traj, traj_ct_crime_prop) %>% 
+  drop_na(traj) # These all belong the LSOA that we dropped from the clustering.
+
+# Check.
+traj_crime_types_chars_df %>% 
+  group_by(traj) %>% 
+  summarise(sum_prop = sum(traj_ct_crime_prop))
+
+# Retrieve cluster names - they were too big for join earlier.
+traj_names_df <- tc_clusters_df %>% 
+  distinct(traj, traj_titles)
+
+traj_crime_types_chars_df <- traj_crime_types_chars_df %>% 
+  left_join(traj_names_df)
+
+# Plot.
+traj_crimes_gg <- ggplot(data = traj_crime_types_chars_df) +
+  geom_bar(mapping = aes(x = traj_titles, y = traj_ct_crime_prop, fill = crime_type),
+           stat = "identity", colour = "black") +
+  labs(y = "Proportion comprising cluster", x = NULL, fill = NULL) +
+  guides(fill = guide_legend(nrow = 4)) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# Save.
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
+
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling.RData")
 load(file = "data_handling.RData")
 
-# What are the characteristics of these clusters?
+# What are the demographic/urban characteristics of these clusters?
 
 # Urban-rural classification.
 tc_clusters_df <- tc_clusters_df %>%
@@ -481,15 +581,24 @@ ggsave(plot = urban_gg, filename = "visuals/urban_gg.png", height = 20, width = 
 e_imd_df <- read_csv("data/e_imd_lsoa.csv")
 w_imd_df <- read_csv("data/w_imd_lsoa.csv")
 
+# Check zeros.
+table(e_imd_df$IMDDecil) # 1909 LSOA in England do not have a decile - same number as Welsh LSOA.
+
+zeros_df <- e_imd_df %>% 
+  filter(IMDDecil == 0) # The zeros are just the Welsh ones.
+
 # Make comparable
 e_imd_df <- e_imd_df %>% 
-  select(lsoa11cd, IMDRank, IMDDecil) 
+  select(lsoa11cd, IMDRank, IMDDecil) %>% 
+  filter(IMDDecil !=0) # Remove the Welsh (zero) LSOA from the England data.
 
 w_imd_df <- w_imd_df %>% 
   select(lsoa11cd, wimd_2019) %>% 
-  rename(IMDDRank = wimd_2019) %>% 
-  mutate(IMDDecil = as.numeric(ntile(IMDDRank, 10)))
-  
+  rename(IMDRank = wimd_2019) %>% 
+  mutate(IMDDecil = as.numeric(ntile(IMDRank, 10))) # Create deciles for Wales.
+
+table(w_imd_df$IMDDecil)
+
 # Check names
 names(e_imd_df)
 names(w_imd_df)
@@ -497,16 +606,39 @@ names(w_imd_df)
 # Combine
 ew_imd_df <- bind_rows(e_imd_df, w_imd_df)
 
-# Join.
-tc_clusters_dec_df <- tc_clusters_df %>% 
-  left_join(ew_imd_df, by = c("lsoa_code" = "lsoa11cd")) %>% 
-  filter(IMDDecil != 0)
+# Still equal number of deciles, but note that the deciles are for E&W each.
+table(ew_imd_df$IMDDecil)
 
-# Check.
-table(tc_clusters_dec_df$IMDDecil)
+# Check LSOA codes.
+length(unique(tc_clusters_df$lsoa_code))
+length(unique(ew_imd_df$lsoa11cd))
+
+# How many match? All of them. So we have deciles for each LSOA in the cluster data.
+matches_df <- ew_imd_df %>% 
+  filter(lsoa11cd %in% unique(tc_clusters_df$lsoa_code))
+
+nrow(matches_df) # N = 33075
+sum(is.na(matches_df)) # no missings.
+
+# Join.
+tc_clusters_imd_df <- tc_clusters_df %>% 
+  left_join(ew_imd_df, by = c("lsoa_code" = "lsoa11cd"))
+
+# Check. 
+table(tc_clusters_imd_df$month)
+length(unique(tc_clusters_imd_df$lsoa_code))
+table(tc_clusters_imd_df$IMDDecil) # Note unbalanced groupings.
+
+test_df <- tc_clusters_imd_df %>% 
+  group_by(lsoa_code, IMDDecil) %>% 
+  tally()
+
+nrow(test_df) # N = 33075
+length(unique(test_df$lsoa_code)) # 33075
+table(test_df$n)  # Each one has 6 time measurement points
 
 # Plot.
-decile_gg <- tc_clusters_dec_df %>%
+decile_gg <- tc_clusters_imd_df %>%
   group_by(traj_titles) %>% 
   mutate(n_traj = n(),
          IMDDecil = as.factor(IMDDecil)) %>% 
