@@ -55,46 +55,68 @@ knitr::include_graphics("visuals/gini_gg.png")
 knitr::include_graphics("visuals/deciles_tot_an_gg.png")
 ```
 
-```{r decileasb, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Decile changes in anti-social behaviour."}
-knitr::include_graphics("visuals/deciles_asb_an_gg.png")
-```
-
 ### Longitudinal clustering
 
-#### Notifiable offences
+#### Cluster trends
 
 - General conclusion: most of the lockdown crime drop can be attributed to a small number LSOAs.
 - Most localized areas actually experienced minimal crime change during the pandemic.
 - The proportion of total crime attributable to very low and very high crime clusters fell into April, while mid-crime areas increased their proportion.
 - All clusters converged back to 'normality' by the end of August.
 - Remarkable stability given the absolute change that occurred during this study period.
+- 2020 mean (dotted line) and median (solid line) of each cluster are shown in black.
+- 2019 mean (dotted line) and median (solid line) of each cluster are shown in red.
+- This demonstrates that the clusters identified using the 2020 data were distinct and meaningful even when also applied to the 2019 data.
 
-```{r kmeansnotoff, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA notifiable offences.", out.width= "90%"}
-knitr::include_graphics("visuals/kmeans_violin_gg.png")
+```{r kmeansnotoff, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA notifiable offences. Mean (dotted line) and median (solid line) are shown for each cluster for 2020 (black) and 2019 (red) respectively.", out.width= "90%"}
+knitr::include_graphics("visuals/kmeans_violin_2019_gg.png")
 ```
 
-```{r kmeansnotoffbar, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions. Proportion of total crime attributable to each cluster.", out.width= "90%"}
-knitr::include_graphics("visuals/tc_props_gg.png")
+#### Contribution of each cluster to change
+
+```{r changeline, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Proportion of month-on-month change in crime attributable to each cluster", out.width= "90%"}
+knitr::include_graphics("visuals/change_gg.png")
 ```
 
-### Anti-social behaviour
-
-- The increase in ASB appears to have been experienced uniformly across clusters.
-- As with notifiable offences, the proportion of total crime attributable to very low and very high ASB clusters fell during the start of lockdown.
-- It is the mid-cluster, comprising only 23% of LSOAs in England and Wales, that swelled in April.
-- That said, there has still be remarkable stability, given the dramatic change that occurred.
-
-```{r kmeansasb, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA ASB.", out.width= "90%"}
-knitr::include_graphics("visuals/kmeans_violin_asb_gg.png")
-```
-
-```{r kmeansasbbar, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA ASB.", out.width= "90%"}
-knitr::include_graphics("visuals/tc_asb_props_gg.png")
-```
-
+- The above summarises the proportion of month-to-month change in crime counts attributable to each cluster.
+- In other words, we try and use this to identify which clusters drove the initial decline and subsequent resurgence nationwide.
+- For example, the red cluster (N = 23,924), despite consisting of 72% of total LSOAs, contributed to around 30% of the drop in notifiable offences between March and April.
+- While, the pink cluster (N = 83) despite comprising only 0.25% of LSOAs, contributed to 12.5% of the fall in notifiable offences between March and April.
+- July to August is weird, because although total crime increased slightly between those months, counts actually decreased for the red and green groupings, and increased for blue and purple. So, the blue and purple groupings drove this final nationwide increase on their own, countering the decline observed in red and green LSOAs. I think this is why the proportional figures do not add up to 1 for this final monthly change, so I need to think of a better way of summarizing this.
+- I haven't worked out how to visualize things yet - it needs revisiting, but hopefully gives you an idea.
 
 ### Spatial distribution of clusters
 
+- List major city composition?
+- Maps of major city case studies.
+
 ### Characteristics of clusters
+
+Descriptive statistics about the LSOAs in each cluster solution.
+
+#### Crime type profile
+
+- What crime types tend to comprise each cluster?
+
+```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "90%"}
+knitr::include_graphics("visuals/traj_crimes_gg.png")
+```
+
+### Deprivation
+
+- What is the level of deprivation across each cluster?
+- Note that deciles for England and Wales have been allocated separately, because they have a different IMD measure.
+
+```{r deprivclus, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Deprivation decile distribution of each cluster solution.", out.width= "90%"}
+knitr::include_graphics("visuals/decile_gg.png")
+```
+
+#### Urban-rural distinction
+
+- What is the urban-rural distinction of each cluster?
+
+```{r urbanrural, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Urban-rural classification distribution of each cluster solution.", out.width= "90%"}
+knitr::include_graphics("visuals/urban_gg.png")
+```
 
 ## Discussion

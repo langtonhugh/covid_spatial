@@ -417,7 +417,47 @@ ggsave(plot = kmeans_violin_gg, filename = "visuals/kmeans_violin_gg.png",
        height = 20, width = 20, unit = "cm", dpi = 200)
 
 # Add 2019 years to it.
+traj_names_df <- tc_clusters_df %>% 
+  distinct(lsoa_code, traj, traj_titles)
+  
+tc_clusters_2019_df <- sub_data_agg_1920_df %>%
+  filter(year == "2019",
+         crime_type != "Anti-social behaviour" & crime_type != "Drugs") %>% 
+  group_by(month, lsoa_code) %>% 
+  summarise(ew_crime_counts = sum(crime_count)) %>% 
+  ungroup() %>% 
+  left_join(traj_names_df) %>% 
+  drop_na(traj_titles) %>% # the LSOA dropped for clustering
+  filter(month != "2019-02", month != "2019-01", month != "2019-09", month != "2019-10", month != "2019-11", month != "2019-12") %>% 
+  mutate(month = as_factor(month),
+         month_fac = fct_recode(month, march  = "2019-03",
+                                       april  = "2019-04",
+                                       may    = "2019-05",
+                                       june   = "2019-06",
+                                       july   = "2019-07",
+                                       august = "2019-08"))
 
+kmeans_violin_2019_gg <- ggplot(data = tc_clusters_df,
+       mapping = aes(x = month_fac, y = ew_crime_counts,#
+                     fill = traj_titles)) +
+  geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
+  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.5, geom = "line") +
+  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.5, geom = "line") +
+  facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
+  stat_summary(data = tc_clusters_2019_df,
+               mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
+               fun = "median", colour = "red", size = 0.5, geom = "line") +
+  stat_summary(data = tc_clusters_2019_df,
+               mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
+               fun = "mean", colour = "red", linetype = "dotted", size = 0.5, geom = "line") +
+  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  labs(x = NULL, y = "crime count") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Save.
+ggsave(plot = kmeans_violin_2019_gg, filename = "visuals/kmeans_violin_2019_gg.png",
+       height = 20, width = 20, unit = "cm", dpi = 200)
 
 # Create proportion contribution to total crime in each month.
 tc_clusters_props_df <- tc_clusters_df %>%
