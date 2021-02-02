@@ -72,18 +72,21 @@ knitr::include_graphics("visuals/deciles_tot_an_gg.png")
 knitr::include_graphics("visuals/kmeans_violin_2019_gg.png")
 ```
 
-#### Contribution of each cluster to change
+#### Contribution of each cluster
 
-```{r changeline, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Proportion of month-on-month change in crime attributable to each cluster", out.width= "90%"}
+```{r changeline, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Count and percentage change between months attributable to each cluster.", out.width= "90%"}
 knitr::include_graphics("visuals/change_gg.png")
 ```
 
-- The above summarises the proportion of month-to-month change in crime counts attributable to each cluster.
-- In other words, we try and use this to identify which clusters drove the initial decline and subsequent resurgence nationwide.
-- For example, the red cluster (N = 23,924), despite consisting of 72% of total LSOAs, contributed to around 30% of the drop in notifiable offences between March and April.
-- While, the pink cluster (N = 83) despite comprising only 0.25% of LSOAs, contributed to 12.5% of the fall in notifiable offences between March and April.
-- July to August is weird, because although total crime increased slightly between those months, counts actually decreased for the red and green groupings, and increased for blue and purple. So, the blue and purple groupings drove this final nationwide increase on their own, countering the decline observed in red and green LSOAs. I think this is why the proportional figures do not add up to 1 for this final monthly change, so I need to think of a better way of summarizing this.
-- I haven't worked out how to visualize things yet - it needs revisiting, but hopefully gives you an idea.
+- The above summarises absolute counts and proportional month-on-month change attributable to each cluster.
+- We use this to identify which clusters drove the initial decline and subsequent resurgence nationwide.
+- Percentages represent the proportion of total nationwide month-on-month change attributable to each cluster.
+- For example, the red cluster (N = 23,924), despite consisting of 72% of total LSOAs, only contributed to 32% of the drop in notifiable offences between March and April.
+- While, the pink cluster (N = 83) despite comprising only 0.25% of LSOAs, contributed to 13% of the fall in notifiable offences between March and April.
+- This 'high crime big drop' cluster would stabilise between April and May, contributing little to the initial nationwide increase -- rather, this change is due to the other clusters increasing and 'resurging' back to normality.
+- Between July and August, red and green clusters would actually experience a drop in notifiable offences, accounting for 17% and 9% of total change respectively. This would partially offset the continued increase among the blue and pink clusters, which accounted for 46% and 28% of total change respectively.
+- The macro-level outcome of this July to August change was a marginal increase in crime.
+- The nationwide trend of 'decline and resurgence' masks underlying volatility: most of the initial 'lockdown crime drop' can be attributed to a disproportionately small number of areas, and the subsequent resurgence back to normality was not uniform, varying considerably at localised spatial scales.
 
 ### Spatial distribution of clusters
 
@@ -100,23 +103,6 @@ Descriptive statistics about the LSOAs in each cluster solution.
 
 ```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "90%"}
 knitr::include_graphics("visuals/traj_crimes_gg.png")
-```
-
-### Deprivation
-
-- What is the level of deprivation across each cluster?
-- Note that deciles for England and Wales have been allocated separately, because they have a different IMD measure.
-
-```{r deprivclus, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Deprivation decile distribution of each cluster solution.", out.width= "90%"}
-knitr::include_graphics("visuals/decile_gg.png")
-```
-
-#### Urban-rural distinction
-
-- What is the urban-rural distinction of each cluster?
-
-```{r urbanrural, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Urban-rural classification distribution of each cluster solution.", out.width= "90%"}
-knitr::include_graphics("visuals/urban_gg.png")
 ```
 
 ## Discussion

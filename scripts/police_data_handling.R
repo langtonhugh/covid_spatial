@@ -490,48 +490,73 @@ change_df <- tc_clusters_df %>%
   summarise(traj_crimes = sum(ew_crime_counts)) %>%
   ungroup() %>%
   group_by(month) %>%
-  mutate(total_crimes = sum(traj_crimes)) %>% 
+  mutate(total_crimes = sum(traj_crimes)) %>% # sum crimes across all trajectories (i.e. count per month in e&w)
   pivot_wider(id_cols = traj_titles, names_from = month, values_from = c(traj_crimes, total_crimes)) %>% 
+  select(traj_titles,
+         traj_crimes_march, traj_crimes_april, traj_crimes_may, 
+         traj_crimes_june, traj_crimes_july, traj_crimes_august,
+         total_crimes_march, total_crimes_april, total_crimes_may, 
+         total_crimes_june, total_crimes_july, total_crimes_august) %>% 
   mutate(tot_mar_apr  = total_crimes_april-total_crimes_march,
          tot_apr_may  = total_crimes_may-total_crimes_april,
          tot_may_jun  = total_crimes_june-total_crimes_may,
          tot_jun_jul  = total_crimes_july-total_crimes_june,
          tot_jul_aug  = total_crimes_august-total_crimes_july,
+         
          traj_mar_apr = traj_crimes_april-traj_crimes_march,
          traj_apr_may = traj_crimes_may-traj_crimes_april,
          traj_may_jun = traj_crimes_june-traj_crimes_may,
          traj_jun_jul = traj_crimes_july-traj_crimes_june,
-         traj_jul_aug = traj_crimes_august-traj_crimes_july,
-         prop_mar_apr = traj_mar_apr/tot_mar_apr,
-         prop_apr_may = traj_apr_may/tot_apr_may,
-         prop_may_jun = traj_may_jun/tot_may_jun,
-         prop_jun_jul = traj_jun_jul/tot_jun_jul,
-         prop_jul_aug = traj_jul_aug/tot_jul_aug) %>% 
-  select(traj_titles, prop_mar_apr:prop_jul_aug) %>% 
-  pivot_longer(cols = -traj_titles, names_to = "month_change", values_to = "percentage_change") %>% 
-  mutate(month_change = fct_relevel(month_change,
-                                    "prop_mar_apr",
-                                    "prop_apr_may",
-                                    "prop_may_jun",
-                                    "prop_jun_jul",
-                                    "prop_jul_aug")) 
+         traj_jul_aug = traj_crimes_august-traj_crimes_july, # This one does not reflect full change due to - and +
+         
+         traj_jul_aug_abs = abs(traj_jul_aug),  # So, we calculate the absolute % instead
+         tot_jul_aug_abs = sum(traj_jul_aug_abs),
 
-# Percentage change plot.
-change_gg <- ggplot(data = change_df,
-       mapping = aes(x = month_change, y = percentage_change,
-                     group = traj_titles, colour = traj_titles), stat = "identity") +
-  geom_line() +
-  geom_point() +
+         prop_mar_apr = 100*round(traj_mar_apr/tot_mar_apr, 2),
+         prop_apr_may = 100*round(traj_apr_may/tot_apr_may, 2),
+         prop_may_jun = 100*round(traj_may_jun/tot_may_jun, 2),
+         prop_jun_jul = 100*round(traj_jun_jul/tot_jun_jul, 2),
+         prop_jul_aug = 100*round(traj_jul_aug_abs/tot_jul_aug_abs, 2)) %>% 
+         
+  select(traj_titles, traj_mar_apr:traj_jul_aug, prop_mar_apr:prop_jul_aug) %>% 
+  pivot_longer(cols = -traj_titles, names_to = "month_change", values_to = "change") %>% 
+  mutate(stat = if_else(condition = str_detect(month_change, "prop"), true = "prop_change", false = "count_change"),
+         month = if_else(condition = str_detect(month_change, "mar_apr"), true = "mar_apr", false = month_change),
+         month = if_else(condition = str_detect(month_change, "apr_may"), true = "apr_may", false = month),
+         month = if_else(condition = str_detect(month_change, "may_jun"), true = "may_jun", false = month),
+         month = if_else(condition = str_detect(month_change, "jun_jul"), true = "jun_jul", false = month),
+         month = if_else(condition = str_detect(month_change, "jul_aug"), true = "jul_aug", false = month)) %>%
+  pivot_wider(id_cols = c(month, traj_titles), names_from = stat, values_from = change) %>% 
+  mutate(month = fct_relevel(month,
+                             "mar_apr",
+                             "apr_may",
+                             "may_jun",
+                             "jun_jul",
+                             "jul_aug"),
+         prop_change = paste(prop_change, "%", sep = ""))
+
+
+change_gg <- ggplot(data = change_df) +
+  geom_bar(mapping = aes(x = month, y = count_change,
+                         group = traj_titles, fill = traj_titles), stat = "identity", position = "dodge") +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  scale_y_continuous(breaks = c(-0.25, 0, 0.25, 0.50, 0.75, 1), labels = scales::percent) +
-  scale_x_discrete(labels = c("March to April", "April to May", "May to June", "June to July",
-                              "July to August")) +
-  labs(y = "Percentage change attributable to cluster", x = NULL, colour = NULL) +
+  geom_text(mapping = aes(x = month, y = count_change, group = traj_titles, label = prop_change),
+            position = position_dodge(width = 0.9), size = 2,  vjust = 2) +
+  labs(y = "Count change attributable to cluster", x = "Change between months", fill = NULL) +
+  scale_x_discrete(labels = c("March to April", "April to May", "May to June", "June to July", "July to August")) +
   theme_bw() +
   theme(legend.position = "bottom")
+
+change_ann_gg <- change_gg +
+  annotate(geom = "text", x = 2.5, y = -15000, size = 3, 
+           label = "Cluster accounted for 13% \n of the lockdown crime drop \n between March and April") +
+  annotate(geom = "curve", x = 2, xend = 1.4, y = -12500, yend = -9000, curvature = 0.2, arrow = arrow(length = unit(1, "mm"))) +
+  annotate(geom = "text", x = 4, y = -8000, size = 3, label = "Further nationwide increase \n partially offset") +
+  annotate(geom = "curve", x = 4.65, xend = 4.8, y = -7200, yend = -2500, curvature = 0.3, arrow = arrow(length = unit(1, "mm"))) 
   
+
 # Save.
-ggsave(plot = change_gg, filename = "visuals/change_gg.png", width = 16, height = 16, unit = "cm")
+ggsave(plot = change_ann_gg, filename = "visuals/change_gg.png", width = 18, height = 16, unit = "cm")
 
 # Crime composition of each cluster.
 # Only keep what's needed.
@@ -584,20 +609,50 @@ ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 1
 # save.image(file = "data_handling.RData")
 load(file = "data_handling.RData")
 
-# Spatial plot of clusters (rather pointless at the national level)
-traj_names_df <- tc_clusters_df %>% 
-  distinct(lsoa_code, traj, traj_titles)
-
-# Join with valid sf object
-lsoa_ew_valid_sf <- left_join(lsoa_ew_valid_sf, traj_names_df, by = c("geo_code" = "lsoa_code"))
-
-# Plot nationwide map.
-cluster_map_gg <- ggplot(data = lsoa_ew_valid_sf) +
-  geom_sf(mapping = aes(fill = traj_titles), alpha = 0.7, colour = "transparent")
-
-# Save.
+# # Spatial plot of clusters (rather pointless at the national level)
+# traj_names_df <- tc_clusters_df %>% 
+#   distinct(lsoa_code, traj, traj_titles)
+# 
+# # Join with valid sf object
+# lsoa_ew_valid_sf <- left_join(lsoa_ew_valid_sf, traj_names_df, by = c("geo_code" = "lsoa_code"))
+# 
+# # Plot nationwide map.
+# cluster_map_gg <- ggplot(data = lsoa_ew_valid_sf) +
+#   geom_sf(mapping = aes(fill = traj_titles), alpha = 0.7, colour = "transparent")
+# 
+# # Save.
 # ggsave(plot = cluster_map_gg, filename = "visuals/cluster_map_gg.png", width = 20, height = 30, unit = "cm")
 
+# OSM characteristics of the clusters (see osm_handling.r)
+osm_df <- read_csv("data/osm_full.csv")
+
+# Create bus and railway station total.
+osm_df <- osm_df %>% 
+  mutate(transport_total = trains + bus)
+
+# Get LSOA and cluster only.
+traj_names_df <- tc_clusters_df %>% 
+  distinct(lsoa_code, traj, traj_titles) 
+
+# Join OSM data.
+traj_names_osm_df <- left_join(traj_names_df, osm_df, by = c("lsoa_code" = "geo_code"))
+
+# Descriptives.
+osm_stats_df <- traj_names_osm_df %>%
+  group_by(traj_titles) %>% 
+  summarise(median_nightlife = median(nightlife_total),
+            mean_nightlife   = mean(nightlife_total),
+            median_shops     = median(shops_total),
+            mean_shops       = mean(shops_total),
+            median_trans     = median(transport_total),
+            mean_trans       = mean(transport_total))
+
+
+osm_stats_df <- osm_stats_df %>% 
+  mutate_if(is.numeric, round, 2)
+  
+# Save stats.
+write_csv(x = osm_stats_df, path = "data/osm_stats_rounded.csv")
 
 
 # What are the demographic/urban characteristics of these clusters?

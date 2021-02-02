@@ -1,25 +1,25 @@
 {
     "collab_server" : "",
     "contents" : "",
-    "created" : 1611768561414.000,
+    "created" : 1612276161794.000,
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "1895326883",
-    "id" : "BE7A3C5A",
-    "lastKnownWriteTime" : 1611769148,
-    "last_content_update" : 1611769148806,
+    "hash" : "3614083551",
+    "id" : "53EC59BB",
+    "lastKnownWriteTime" : 1612277866,
+    "last_content_update" : 1612277866050,
     "path" : "~/GitHub/covid_spatial/draft_paper.Rmd",
     "project_path" : "draft_paper.Rmd",
     "properties" : {
-        "cursorPosition" : "75,0",
-        "scrollLine" : "62",
+        "cursorPosition" : "94,0",
+        "scrollLine" : "86",
         "tempName" : "Untitled1"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 2,
+    "relative_order" : 1,
     "source_on_save" : false,
     "source_window" : "",
     "type" : "r_markdown"
