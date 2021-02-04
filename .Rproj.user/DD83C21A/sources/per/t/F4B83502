@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1612457430611.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2590173769",
+    "id" : "F4B83502",
+    "lastKnownWriteTime" : 1612458013,
+    "last_content_update" : 1612458013604,
+    "path" : "~/GitHub/covid_spatial/scripts/osm_handling.R",
+    "project_path" : "scripts/osm_handling.R",
+    "properties" : {
+        "cursorPosition" : "612,0",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "601",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

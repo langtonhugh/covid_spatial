@@ -611,6 +611,35 @@ osm_transport_df <- lsoa_ew_valid_sf %>%
   as_tibble() %>% 
   select(-geometry, -geo_labelw, -country_cd)
 
+# conveniencercycle car parks.
+convenience_sf <- opq(bbox = ew_bb, timeout = 300) %>%
+  add_osm_feature(key = "shop", value = "convenience") %>% 
+  osmdata_sf()
+
+# Points.
+convenience_pts_sf <- convenience_sf$osm_points
+
+# Deplicates,
+length(unique(convenience_pts_sf$geometry)) 
+
+# Complete.
+convenience_pts_complete_sf <- convenience_pts_sf %>% 
+  distinct(geometry)
+
+# Project
+convenience_pts_complete_sf <- convenience_pts_complete_sf %>% 
+  st_transform(crs = 27700)
+
+# Aggregate bar points to LSOA.
+lsoa_ew_valid_sf <- lsoa_ew_valid_sf %>% 
+  mutate(conveniences = lengths(st_intersects(lsoa_ew_valid_sf, convenience_pts_complete_sf)))
+
+# subset for join
+osm_transport_df <- lsoa_ew_valid_sf %>% 
+  as_tibble() %>% 
+  select(-geometry, -geo_labelw, -country_cd)
+
+
 # Open OSM data.
 osm_df <- read_csv("data/osm_full.csv")
 
@@ -621,12 +650,12 @@ osm_full_df <- left_join(osm_df, osm_transport_df)
 write_csv(x = osm_full_df, path = "data/osm_full.csv")
 
 # Subset stats table for paper.
-osm_df <- read_csv("data/osm_stats_rounded.csv")
+osm_df <- read_csv("data/osm_stats_rounded_k6.csv")
 
 osm_df <- osm_df %>% 
-  select(traj_titles, starts_with("median"), starts_with("mean")) %>% 
-  rename(Trajectory              = traj_titles,
-         `Nightlife (median)`    = median_nightlife,
+  mutate(Cluster = LETTERS[1:6]) %>% 
+  select(Cluster, starts_with("median"), starts_with("mean")) %>% 
+  rename(`Nightlife (median)`    = median_nightlife,
          `Nightlife (mean)`      = mean_nightlife,
          `Shops (median)`        = median_shops,
          `Shops (mean)`          = mean_shops,
@@ -635,4 +664,5 @@ osm_df <- osm_df %>%
          `Bicycle parking (median)`  = median_bikes,
          `Bicycle parking (mean)`    = mean_bikes)
 
-write_csv(x = osm_df, path = "data/osm_stats_sub_rounded.csv")
+
+write_csv(x = osm_df, path = "data/osm_stats_sub_rounded_k6.csv")

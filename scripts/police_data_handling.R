@@ -282,11 +282,12 @@ raw_counts_gg <- sub_data_agg_1920_df %>%
   geom_line(mapping = aes(x = month, y = ew_crime_count, group = year, colour = year), size = 0.8) +
   geom_vline(xintercept = 1.7, linetype = "dotted") +
   facet_wrap(~ crime_type, ncol = 3, scales = "free_y") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
+  # scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   scale_color_manual(values = rev(c("black", "darkgrey"))) +
   labs(x = NULL, y = NULL, colour = NULL) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 6, hjust = -0.4),
+  theme(axis.text.x = element_text(size = 6), #, hjust = -0.4
         axis.ticks = element_line(size = 0.3, lineend = "round"),
         axis.text.y = element_text(size = 6),
         strip.text = element_text(size = 8),
@@ -323,10 +324,11 @@ gini_gg <- ggplot(data = gini_ct_1920_df) +
   facet_wrap(~ crime_type, ncol = 3) +
   ylim(0, 1) +
   labs(x = NULL, y = "Generalized Gini Coefficient", colour = NULL) +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  # scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
   scale_color_manual(values = rev(c("black", "darkgrey"))) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 6, hjust = -0.4),
+  theme(axis.text.x = element_text(size = 6), #, hjust = -0.4
         axis.ticks = element_line(size = 0.3, lineend = "round"),
         axis.text.y = element_text(size = 6),
         strip.text = element_text(size = 8),
@@ -346,73 +348,76 @@ tc_kmeans_df <- sub_data_agg_1920_df %>%
 
 # For now, only keep the lockdown period in the first visual: March to August.
 tc_kmeans_sub_df <- tc_kmeans_df %>% 
-  filter(month == "2020-03" | month == "2020-04" | month == "2020-05" | month == "2020-06" |
-         month == "2020-07" | month == "2020-08")
+  filter(month == "2020-02" | month == "2020-03" | month == "2020-04" | month == "2020-05" |
+         month == "2020-06" | month == "2020-07" | month == "2020-08")
 
 # Check for those LSOAs which were essentially crime-free during the study period.
 # We keep in wide because that's what kml likes.
 tc_kmeans_sub_clean_df <- tc_kmeans_sub_df %>% 
   pivot_wider(id_cols = lsoa_code, names_from = "month", values_from = "ew_crime_count") %>%
-  mutate(total_months = rowSums(.[2:7])) %>% 
-  filter(total_months != 0) %>% # only one!
+  mutate(total_months = rowSums(.[2:8])) %>% 
+  filter(total_months != 0) %>% # one march-aug, none feb-aug.
   select(-total_months) %>% 
-  rename(march = `2020-03`, april = `2020-04`, may = `2020-05`, june = `2020-06`,
+  rename(february = `2020-02`,
+         march = `2020-03`, april = `2020-04`, may = `2020-05`, june = `2020-06`,
          july = `2020-07` , august = `2020-08`)
+
+length(unique(tc_kmeans_sub_df$lsoa_code))
+length(unique(tc_kmeans_sub_clean_df$lsoa_code))
+
 
 # Perform kmeans
 n <- 3:6
 
-tc_kml_mat <- as.matrix(tc_kmeans_sub_clean_df[2:7])
+tc_kml_mat <- as.matrix(tc_kmeans_sub_clean_df[2:8])
 tc_traj    <- clusterLongData(traj = tc_kml_mat) 
 kml(tc_traj, nbClusters = n, toPlot = "criterion", nbRedrawing = 20)
 
 # Apppend clusters back with data frame.
 tc_clusters <- cbind.data.frame(lsoa_code   = tc_kmeans_sub_clean_df$lsoa_code,
-                                 traj       = getClusters(tc_traj, 4)) # We select 4 due to CH value.
+                                 traj       = getClusters(tc_traj, 6)) # We select 4 due to CH value.
 
 tc_clusters_df <- tc_kmeans_sub_clean_df %>% 
   left_join(tc_clusters) %>% 
   pivot_longer(cols = c(-lsoa_code, -traj), names_to = "month", values_to = "ew_crime_counts") %>% 
-  mutate(month_fac = fct_relevel(month, "march", "april", "may", "june", "july", "august"))
+  mutate(month_fac = fct_relevel(month, "february", "march", "april", "may", "june", "july", "august"))
 
 # Check cluster sizes.
 as.data.frame(table(tc_clusters_df$traj)) %>% 
-  mutate(traj_count = Freq/6,
+  mutate(traj_count = Freq/7,
          traj_prop  = 100*(traj_count/sum(traj_count)))
 
 # Create new label for each cluster.
 tc_clusters_df <- tc_clusters_df %>% 
-  mutate(traj_titles  = ifelse(test = traj == "A", yes = "N = 23,924 (72%)", no = traj),
-         traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (25%)" , no = traj_titles),
-         traj_titles  = ifelse(test = traj == "C", yes = "N = 944 (3%)"  , no = traj_titles),
-         traj_titles  = ifelse(test = traj == "D", yes = "N = 83 (0.25%)"  , no = traj_titles),
-         traj_titles  = fct_relevel(traj_titles, "N = 23,924 (72%)",
-                                                 "N = 8,124 (25%)",
-                                                 "N = 944 (3%)",
-                                                 "N = 83 (0.25%)"))
+  mutate(traj_titles  = ifelse(test = traj == "A", yes = "[A] N = 19,162 (58%)" , no = traj),
+         traj_titles  = ifelse(test = traj == "B", yes = "[B] N = 10,162 (31%)" , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "C", yes = "[C] N = 3,184 (10%)"  , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "D", yes = "[D] N = 533 (1.6%)"   , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "E", yes = "[E] N = 101 (0.3%)"   , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "F", yes = "[F] N = 9 (0.03%)"    , no = traj_titles),
+         traj_titles  = fct_relevel(traj_titles, "[A] N = 19,162 (58%)",
+                                                 "[B] N = 10,162 (31%)",
+                                                 "[C] N = 3,184 (10%)",
+                                                 "[D] N = 533 (1.6%)",
+                                                 "[E] N = 101 (0.3%)",
+                                                 "[F] N = 9 (0.03%)"))
+
+# Create new label for each cluster.
+# tc_clusters_df <- tc_clusters_df %>% 
+#   mutate(traj_titles  = ifelse(test = traj == "A", yes = "N = 23,924 (72%)", no = traj),
+#          traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (25%)" , no = traj_titles),
+#          traj_titles  = ifelse(test = traj == "C", yes = "N = 944 (3%)"  , no = traj_titles),
+#          traj_titles  = ifelse(test = traj == "D", yes = "N = 83 (0.25%)"  , no = traj_titles),
+#          traj_titles  = fct_relevel(traj_titles, "N = 23,924 (72%)",
+#                                                  "N = 8,124 (25%)",
+#                                                  "N = 944 (3%)",
+#                                                  "N = 83 (0.25%)"))
 
 
 # Save for Anthony
 # tc_clusters_df %>% 
 #   distinct(lsoa_code, traj, traj_titles) %>% 
 #   write_csv(path = "results/tc_clusters_df.csv")
-
-# Plot (violin plot).
-kmeans_violin_gg <- ggplot(data = tc_clusters_df,
-                          mapping = aes(x = month_fac, y = ew_crime_counts,#
-                                        fill = traj_titles)) +
-  geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
-  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.5, geom = "line") +
-  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.5, geom = "line") +
-  facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
-  labs(x = NULL, y = "crime count") +
-  theme_bw() +
-  theme(legend.position = "none")
-
-# Save.
-ggsave(plot = kmeans_violin_gg, filename = "visuals/kmeans_violin_gg.png",
-       height = 20, width = 20, unit = "cm", dpi = 200)
 
 # Add 2019 years to it.
 traj_names_df <- tc_clusters_df %>% 
@@ -426,193 +431,16 @@ tc_clusters_2019_df <- sub_data_agg_1920_df %>%
   ungroup() %>% 
   left_join(traj_names_df) %>% 
   drop_na(traj_titles) %>% # the LSOA dropped for clustering
-  filter(month != "2019-02", month != "2019-01", month != "2019-09", month != "2019-10", month != "2019-11", month != "2019-12") %>% 
+  # filter(month != "2019-02", month != "2019-01", month != "2019-09", month != "2019-10", month != "2019-11", month != "2019-12") %>% 
+  filter(month != "2019-01", month != "2019-09", month != "2019-10", month != "2019-11", month != "2019-12") %>%
   mutate(month = as_factor(month),
-         month_fac = fct_recode(month, march  = "2019-03",
-                                       april  = "2019-04",
-                                       may    = "2019-05",
-                                       june   = "2019-06",
-                                       july   = "2019-07",
-                                       august = "2019-08"))
-
-# Plot - basically just editing the original one above with an additional stat summary.
-kmeans_violin_2019_gg <- ggplot(data = tc_clusters_df,
-       mapping = aes(x = month_fac, y = ew_crime_counts,#
-                     fill = traj_titles)) +
-  geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
-  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.5, geom = "line") +
-  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.5, geom = "line") +
-  facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
-  stat_summary(data = tc_clusters_2019_df,
-               mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
-               fun = "median", colour = "red", size = 0.5, geom = "line") +
-  stat_summary(data = tc_clusters_2019_df,
-               mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
-               fun = "mean", colour = "red", linetype = "dotted", size = 0.5, geom = "line") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
-  labs(x = NULL, y = "crime count") +
-  theme_bw() +
-  theme(legend.position = "none")
-
-# Save.
-ggsave(plot = kmeans_violin_2019_gg, filename = "visuals/kmeans_violin_2019_gg.png",
-       height = 20, width = 20, unit = "cm", dpi = 200)
-
-# Create proportion contribution to total crime in each month.
-tc_clusters_props_df <- tc_clusters_df %>%
-  group_by(month_fac) %>% 
-  mutate(monthly_counts = sum(ew_crime_counts)) %>% 
-  ungroup() %>% 
-  mutate(monthly_props = 100*(ew_crime_counts/monthly_counts)) %>% 
-  group_by(month_fac, traj_titles) %>% 
-  summarise(sum_monthly_props = sum(monthly_props)) %>% 
-  ungroup()
-
-# Plot stacks
-tc_props_gg <- ggplot(data = tc_clusters_props_df) +
-  geom_bar(mapping = aes(x = month_fac, y = sum_monthly_props, group = traj_titles, fill = traj_titles),
-            alpha = 0.8, stat = "identity") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
-  labs(x = NULL, y = "% total crime", fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "bottom")
-
-# Save.
-ggsave(plot = tc_props_gg, filename = "visuals/tc_props_gg.png",
-       height = 14, width = 16, unit = "cm", dpi = 200)
-
-# Calculate the % of month-on-month change each cluster contributed to.
-change_df <- tc_clusters_df %>% 
-  select(lsoa_code, month, traj_titles, ew_crime_counts) %>% 
-  group_by(month, traj_titles) %>%
-  summarise(traj_crimes = sum(ew_crime_counts)) %>%
-  ungroup() %>%
-  group_by(month) %>%
-  mutate(total_crimes = sum(traj_crimes)) %>% # sum crimes across all trajectories (i.e. count per month in e&w)
-  pivot_wider(id_cols = traj_titles, names_from = month, values_from = c(traj_crimes, total_crimes)) %>% 
-  select(traj_titles,
-         traj_crimes_march, traj_crimes_april, traj_crimes_may, 
-         traj_crimes_june, traj_crimes_july, traj_crimes_august,
-         total_crimes_march, total_crimes_april, total_crimes_may, 
-         total_crimes_june, total_crimes_july, total_crimes_august) %>% 
-  mutate(tot_mar_apr  = total_crimes_april-total_crimes_march,
-         tot_apr_may  = total_crimes_may-total_crimes_april,
-         tot_may_jun  = total_crimes_june-total_crimes_may,
-         tot_jun_jul  = total_crimes_july-total_crimes_june,
-         tot_jul_aug  = total_crimes_august-total_crimes_july,
-         
-         traj_mar_apr = traj_crimes_april-traj_crimes_march,
-         traj_apr_may = traj_crimes_may-traj_crimes_april,
-         traj_may_jun = traj_crimes_june-traj_crimes_may,
-         traj_jun_jul = traj_crimes_july-traj_crimes_june,
-         traj_jul_aug = traj_crimes_august-traj_crimes_july, # This one does not reflect full change due to - and +
-         
-         traj_jul_aug_abs = abs(traj_jul_aug),  # So, we calculate the absolute % instead
-         tot_jul_aug_abs = sum(traj_jul_aug_abs),
-
-         prop_mar_apr = 100*round(traj_mar_apr/tot_mar_apr, 2),
-         prop_apr_may = 100*round(traj_apr_may/tot_apr_may, 2),
-         prop_may_jun = 100*round(traj_may_jun/tot_may_jun, 2),
-         prop_jun_jul = 100*round(traj_jun_jul/tot_jun_jul, 2),
-         prop_jul_aug = 100*round(traj_jul_aug_abs/tot_jul_aug_abs, 2)) %>% 
-         
-  select(traj_titles, traj_mar_apr:traj_jul_aug, prop_mar_apr:prop_jul_aug) %>% 
-  pivot_longer(cols = -traj_titles, names_to = "month_change", values_to = "change") %>% 
-  mutate(stat = if_else(condition = str_detect(month_change, "prop"), true = "prop_change", false = "count_change"),
-         month = if_else(condition = str_detect(month_change, "mar_apr"), true = "mar_apr", false = month_change),
-         month = if_else(condition = str_detect(month_change, "apr_may"), true = "apr_may", false = month),
-         month = if_else(condition = str_detect(month_change, "may_jun"), true = "may_jun", false = month),
-         month = if_else(condition = str_detect(month_change, "jun_jul"), true = "jun_jul", false = month),
-         month = if_else(condition = str_detect(month_change, "jul_aug"), true = "jul_aug", false = month)) %>%
-  pivot_wider(id_cols = c(month, traj_titles), names_from = stat, values_from = change) %>% 
-  mutate(month = fct_relevel(month,
-                             "mar_apr",
-                             "apr_may",
-                             "may_jun",
-                             "jun_jul",
-                             "jul_aug"),
-         prop_change = paste(prop_change, "%", sep = ""))
-
-
-change_gg <- ggplot(data = change_df) +
-  geom_bar(mapping = aes(x = month, y = count_change,
-                         group = traj_titles, fill = traj_titles), stat = "identity", position = "dodge") +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_text(mapping = aes(x = month, y = count_change, group = traj_titles, label = prop_change),
-            position = position_dodge(width = 0.9), size = 2,  vjust = 2) +
-  labs(y = "Count change attributable to cluster", x = "Change between months", fill = NULL) +
-  scale_x_discrete(labels = c("March to April", "April to May", "May to June", "June to July", "July to August")) +
-  theme_bw() +
-  theme(legend.position = "bottom")
-
-change_ann_gg <- change_gg +
-  annotate(geom = "text", x = 2.5, y = -15000, size = 3, 
-           label = "Cluster accounted for 13% \n of the lockdown crime drop \n between March and April") +
-  annotate(geom = "curve", x = 2, xend = 1.4, y = -12500, yend = -9000, curvature = 0.2, arrow = arrow(length = unit(1, "mm"))) +
-  annotate(geom = "text", x = 4, y = -8000, size = 3, label = "Further nationwide increase \n partially offset") +
-  annotate(geom = "curve", x = 4.65, xend = 4.8, y = -7200, yend = -2500, curvature = 0.3, arrow = arrow(length = unit(1, "mm"))) 
-  
-
-# Save.
-ggsave(plot = change_ann_gg, filename = "visuals/change_gg.png", width = 18, height = 16, unit = "cm")
-
-# Crime composition of each cluster.
-# Only keep what's needed.
-tc_clusters_sub_df <- tc_clusters_df %>% 
-  select(lsoa_code, traj) %>% 
-  distinct(lsoa_code, traj)
-  
-# Join back with crime data.
-traj_crime_types_df <- sub_data_agg_1920_df %>% 
-  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
-         month == "2020-03" | month == "2020-04" | month == "2020-05" |
-         month == "2020-06" | month == "2020-07" | month == "2020-08") %>% 
-  left_join(tc_clusters_sub_df, by = "lsoa_code")
-
-# Calculate
-traj_crime_types_chars_df <- traj_crime_types_df %>% 
-  group_by(traj, month) %>% 
-  mutate(traj_crimes = sum(crime_count)) %>%
-  ungroup() %>% 
-  group_by(crime_type, traj, month) %>% 
-  mutate(traj_ct_crime = sum(crime_count)) %>% 
-  ungroup() %>% 
-  mutate(traj_ct_crime_prop = traj_ct_crime/traj_crimes) %>% 
-  distinct(crime_type, month, traj, traj_ct_crime_prop) %>% 
-  drop_na(traj) # These all belong the LSOA that we dropped from the clustering.
-
-# Check.
-traj_crime_types_chars_df %>% 
-  group_by(traj, month) %>% 
-  summarise(sum_prop = sum(traj_ct_crime_prop))
-
-# Retrieve cluster names - they were too big for join earlier.
-traj_names_df <- tc_clusters_df %>% 
-  distinct(traj, traj_titles)
-
-traj_crime_types_chars_df <- traj_crime_types_chars_df %>% 
-  left_join(traj_names_df)
-
-# Plot.
-traj_crimes_gg <- ggplot(data = traj_crime_types_chars_df) +
-  # geom_area(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
-  #           stat = "identity", colour = "black", size = 0.2) +
-  geom_bar(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
-            stat = "identity", colour = "black", size = 0.2) +
-  facet_wrap(~traj_titles, nrow = 4) +
-  labs(y = "Proportion comprising total crime", x = NULL, fill = NULL) +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
-  guides(fill = guide_legend(ncol = 1)) +
-  theme_bw() +
-  theme(legend.position = "right", strip.background = element_rect(fill = "transparent"))
-
-# Save.
-ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 21, unit = "cm")
-# ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
-
-# Save and load workspace as appropriate.
-# save.image(file = "data_handling.RData")
-load(file = "data_handling.RData")
+         month_fac = fct_recode(month, february = "2019-02",
+                                       march    = "2019-03",
+                                       april    = "2019-04",
+                                       may      = "2019-05",
+                                       june     = "2019-06",
+                                       july     = "2019-07",
+                                       august   = "2019-08"))
 
 # Expand violin plot with 2018 data.
 list_2018 <- paste("data/", list.files("data", pattern = glob2rx("2018*street.csv"),  recursive=TRUE), sep = "")
@@ -665,8 +493,8 @@ length(unique(sub_ew_data_2018$lsoa_code))
 # Aggregate. Remove ASB and drugs, and unwanted months, then tally.
 sub_ew_agg_2018 <- sub_ew_data_2018 %>% 
   filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
-         month == "2018-03" | month == "2018-04" | month == "2018-05" |
-         month == "2018-06" | month == "2018-07" | month == "2018-08") %>% 
+         month == "2018-02" | month == "2018-03" | month == "2018-04" | month == "2018-05" |
+           month == "2018-06" | month == "2018-07" | month == "2018-08") %>% 
   group_by(month, lsoa_code) %>% 
   summarise(ew_crime_counts = n()) %>% 
   ungroup() 
@@ -678,19 +506,20 @@ lsoa_clusters_df <- tc_clusters_df %>%
 # Join with 2018 data.
 tc_clusters_2018_df <- sub_ew_agg_2018 %>% 
   left_join(lsoa_clusters_df) %>% 
-  mutate(month_fac = fct_recode(month, march  = "2018-03",
-                                       april  = "2018-04",
-                                       may    = "2018-05",
-                                       june   = "2018-06",
-                                       july   = "2018-07",
-                                       august = "2018-08"))
+  mutate(month_fac = fct_recode(month, february = "2018-02",
+                                march    = "2018-03",
+                                april    = "2018-04",
+                                may      = "2018-05",
+                                june     = "2018-06",
+                                july     = "2018-07",
+                                august   = "2018-08"))
 
 
 
 # Violin plot with 2018 added.
 kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
-       mapping = aes(x = month_fac, y = ew_crime_counts,#
-                     fill = traj_titles)) +
+                                mapping = aes(x = month_fac, y = ew_crime_counts,#
+                                              fill = traj_titles)) +
   geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
   facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
   stat_summary(data = tc_clusters_2019_df,
@@ -707,15 +536,182 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
                fun = "mean", colour = "blue", linetype = "dotted", size = 0.5, geom = "line") +
   stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
   stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  scale_x_discrete(labels = c(str_extract(month.name[3:9], "^.{3}"), character(1))) +
   labs(x = NULL, y = "crime count") +
   theme_bw() +
   theme(legend.position = "none")
 
 # Save full plot: 2020 clusters, 2018 and 2019.
-ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_1819_gg.png",
-       height = 20, width = 20, unit = "cm", dpi = 200)
+ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_k6_1819_gg.png",
+       height = 24, width = 20, unit = "cm", dpi = 200)
+# ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_1819_gg.png",
+#        height = 20, width = 20, unit = "cm", dpi = 200)
 
+# Create proportion contribution to total crime in each month.
+tc_clusters_props_df <- tc_clusters_df %>%
+  group_by(month_fac) %>% 
+  mutate(monthly_counts = sum(ew_crime_counts)) %>% 
+  ungroup() %>% 
+  mutate(monthly_props = 100*(ew_crime_counts/monthly_counts)) %>% 
+  group_by(month_fac, traj_titles) %>% 
+  summarise(sum_monthly_props = sum(monthly_props)) %>% 
+  ungroup()
+
+# Plot stacks
+tc_props_gg <- ggplot(data = tc_clusters_props_df) +
+  geom_bar(mapping = aes(x = month_fac, y = sum_monthly_props, group = traj_titles, fill = traj_titles),
+            alpha = 0.8, stat = "identity") +
+  scale_x_discrete(labels = c(str_extract(month.name[3:9], "^.{3}"), character(1))) +
+  labs(x = NULL, y = "% total crime", fill = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# Save.
+ggsave(plot = tc_props_gg, filename = "visuals/tc_props_gg.png",
+       height = 14, width = 16, unit = "cm", dpi = 200)
+
+# Calculate the % of month-on-month change each cluster contributed to.
+change_df <- tc_clusters_df %>% 
+  select(lsoa_code, month, traj_titles, ew_crime_counts) %>% 
+  group_by(month, traj_titles) %>%
+  summarise(traj_crimes = sum(ew_crime_counts)) %>%
+  ungroup() %>%
+  group_by(month) %>%
+  mutate(total_crimes = sum(traj_crimes)) %>% # sum crimes across all trajectories (i.e. count per month in e&w)
+  pivot_wider(id_cols = traj_titles, names_from = month, values_from = c(traj_crimes, total_crimes)) %>% 
+  select(traj_titles,
+         traj_crimes_february,
+         traj_crimes_march, traj_crimes_april, traj_crimes_may, 
+         traj_crimes_june, traj_crimes_july, traj_crimes_august,
+         total_crimes_february,
+         total_crimes_march, total_crimes_april, total_crimes_may, 
+         total_crimes_june, total_crimes_july, total_crimes_august) %>% 
+  mutate(traj_feb_mar = traj_crimes_march-traj_crimes_february,
+         traj_mar_apr = traj_crimes_april-traj_crimes_march,
+         traj_apr_may = traj_crimes_may-traj_crimes_april,
+         traj_may_jun = traj_crimes_june-traj_crimes_may,
+         traj_jun_jul = traj_crimes_july-traj_crimes_june,
+         traj_jul_aug = traj_crimes_august-traj_crimes_july,
+         tot_feb_mar  = sum(abs(traj_feb_mar)),
+         tot_mar_apr  = sum(abs(traj_mar_apr)),
+         tot_apr_may  = sum(abs(traj_apr_may)),
+         tot_may_jun  = sum(abs(traj_may_jun)),
+         tot_jun_jul  = sum(abs(traj_jun_jul)),
+         tot_jul_aug  = sum(abs(traj_jul_aug)),
+         prop_feb_mar = 100*round(traj_feb_mar/tot_feb_mar, 2),
+         prop_mar_apr = 100*round(traj_mar_apr/tot_mar_apr, 2),
+         prop_apr_may = 100*round(traj_apr_may/tot_apr_may, 2),
+         prop_may_jun = 100*round(traj_may_jun/tot_may_jun, 2),
+         prop_jun_jul = 100*round(traj_jun_jul/tot_jun_jul, 2),
+         prop_jul_aug = 100*round(traj_jul_aug/tot_jul_aug, 2)) %>% 
+  select(traj_titles, traj_feb_mar:traj_jul_aug, prop_feb_mar:prop_jul_aug) %>% 
+  pivot_longer(cols = -traj_titles, names_to = "month_change", values_to = "change") %>% 
+  mutate(stat = if_else(condition = str_detect(month_change, "prop"), true = "prop_change", false = "count_change"),
+         month = if_else(condition = str_detect(month_change, "feb_mar"), true = "feb_mar", false = month_change),
+         month = if_else(condition = str_detect(month_change, "mar_apr"), true = "mar_apr", false = month),
+         month = if_else(condition = str_detect(month_change, "apr_may"), true = "apr_may", false = month),
+         month = if_else(condition = str_detect(month_change, "may_jun"), true = "may_jun", false = month),
+         month = if_else(condition = str_detect(month_change, "jun_jul"), true = "jun_jul", false = month),
+         month = if_else(condition = str_detect(month_change, "jul_aug"), true = "jul_aug", false = month)) %>%
+  pivot_wider(id_cols = c(month, traj_titles), names_from = stat, values_from = change) %>% 
+  mutate(month = fct_relevel(month,
+                             "feb_mar",
+                             "mar_apr",
+                             "apr_may",
+                             "may_jun",
+                             "jun_jul",
+                             "jul_aug"),
+         prop_change = paste(abs(prop_change), "%", sep = ""))
+
+
+change_gg <- ggplot(data = change_df) +
+  geom_bar(mapping = aes(x = month, y = count_change,
+                         group = traj_titles, fill = traj_titles), stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 0, linetype = "dotted", size = 0.3, alpha = 1) +
+  geom_text(mapping = aes(x = month, y = count_change, group = traj_titles, label = prop_change),
+            position = position_dodge(width = 0.9), size = 1.7,  vjust = -1.5) +
+  labs(y = "Count change attributable to cluster", x = NULL, fill = NULL) +
+  scale_x_discrete(labels = c("February to March", "March to April", "April to May", "May to June", "June to July", "July to August")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+change_ann_gg <- change_gg +
+  annotate(geom = "text", x = 1.5, y = 14000, size = 3, label = "Percentage of nationwide \n absolute monthly change \n attributable to cluster") +
+  annotate(geom = "curve", x = 2.15, xend = 2.65, y = 14500, yend = 15000, curvature = -0.1, arrow = arrow(length = unit(1, "mm"))) +
+  annotate(geom = "text", x = 3.5, y = -11000, size = 3,
+           label = "15% of the lockdown drop  \n between March and April \n attributable to just 110 LSOA") +
+  annotate(geom = "curve", x = 3.5, xend = 2.52, y = -9000, yend = -3000, curvature = 0.2, arrow = arrow(length = unit(1, "mm"))) +
+  annotate(geom = "curve", x = 3.5, xend = 2.32, y = -9000, yend = -6000, curvature = 0.2, arrow = arrow(length = unit(1, "mm"))) +
+  annotate(geom = "text", x = 5, y = -8000, size = 3, label = "Further nationwide increase \n partially offset") +
+  annotate(geom = "curve", x = 5.2, xend = 5.6, y = -6500, yend = -1300, curvature = -0.3, arrow = arrow(length = unit(1, "mm")))
+
+# change_ann_gg <- change_gg +
+#   annotate(geom = "text", x = 2.5, y = -15000, size = 3, 
+#            label = "Cluster accounted for 13% \n of the lockdown crime drop \n between March and April") +
+#   annotate(geom = "curve", x = 2, xend = 1.4, y = -12500, yend = -9000, curvature = 0.2, arrow = arrow(length = unit(1, "mm"))) +
+#   annotate(geom = "text", x = 4, y = -8000, size = 3, label = "Further nationwide increase \n partially offset") +
+#   annotate(geom = "curve", x = 4.65, xend = 4.8, y = -7200, yend = -2500, curvature = 0.3, arrow = arrow(length = unit(1, "mm"))) 
+
+# Save.
+ggsave(plot = change_ann_gg, filename = "visuals/change_k6_gg.png", width = 18, height = 16, unit = "cm")
+# ggsave(plot = change_ann_gg, filename = "visuals/change_gg.png", width = 18, height = 16, unit = "cm")
+
+# Crime composition of each cluster.
+# Only keep what's needed.
+tc_clusters_sub_df <- tc_clusters_df %>% 
+  select(lsoa_code, traj) %>% 
+  distinct(lsoa_code, traj)
+  
+# Join back with crime data.
+traj_crime_types_df <- sub_data_agg_1920_df %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month == "2020-02" | month == "2020-03" | month == "2020-04" | month == "2020-05" |
+         month == "2020-06" | month == "2020-07" | month == "2020-08") %>% 
+  left_join(tc_clusters_sub_df, by = "lsoa_code")
+
+# Calculate
+traj_crime_types_chars_df <- traj_crime_types_df %>% 
+  group_by(traj, month) %>% 
+  mutate(traj_crimes = sum(crime_count)) %>%
+  ungroup() %>% 
+  group_by(crime_type, traj, month) %>% 
+  mutate(traj_ct_crime = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(traj_ct_crime_prop = traj_ct_crime/traj_crimes) %>% 
+  distinct(crime_type, month, traj, traj_ct_crime_prop) %>% 
+  drop_na(traj) # These all belong the LSOA that we dropped from the clustering.
+
+# Check.
+traj_crime_types_chars_df %>% 
+  group_by(traj, month) %>% 
+  summarise(sum_prop = sum(traj_ct_crime_prop))
+
+# Retrieve cluster names - they were too big for join earlier.
+traj_names_df <- tc_clusters_df %>% 
+  distinct(traj, traj_titles)
+
+traj_crime_types_chars_df <- traj_crime_types_chars_df %>% 
+  left_join(traj_names_df)
+
+# Plot.
+traj_crimes_gg <- ggplot(data = traj_crime_types_chars_df) +
+  geom_bar(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
+            stat = "identity", colour = "black", size = 0.2) +
+  facet_wrap(~traj_titles, nrow = 6) +
+  labs(y = "Proportion comprising total crime", x = NULL, fill = NULL) +
+  scale_x_discrete(labels = c(str_extract(month.name[3:9], "^.{3}"), character(1))) +
+  guides(fill = guide_legend(ncol = 1)) +
+  theme_bw() +
+  theme(legend.position = "right", strip.background = element_rect(fill = "transparent"))
+
+# Save.
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png", width = 14, height = 26, unit = "cm")
+# ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 21, unit = "cm")
+# ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
+
+# Save and load workspace as appropriate.
+# save.image(file = "data_handling_6kmean.RData")
+load(file = "data_handling.RData")
 
 # # Spatial plot of clusters (rather pointless at the national level)
 # traj_names_df <- tc_clusters_df %>% 
@@ -764,21 +760,21 @@ osm_stats_df <- traj_names_osm_df %>%
             sd_bikes         = sd(bikes)) %>% 
   mutate_if(is.numeric, round, 2)
 
-# Stats visual.
-osm_stats_gg <- traj_names_osm_df %>% 
-  select(traj_titles, nightlife_total, shops_total, transport_total, bikes) %>% 
-  pivot_longer(cols = -traj_titles, names_to = "type", values_to = "count") %>% 
-  ggplot(.) +
-  geom_histogram(mapping = aes(x = count), bins = 30) +
-  facet_wrap(~type + traj_titles, scales = "free_y") +
-  theme_bw() +
-  theme(axis.text = element_text(size = 6))
-
-# Save.
-ggsave(plot = osm_stats_gg, filename = "visuals/osm_plots.png", height = 10, width = 12)
+# # Stats visual.
+# osm_stats_gg <- traj_names_osm_df %>% 
+#   select(traj_titles, nightlife_total, shops_total, transport_total, bikes) %>% 
+#   pivot_longer(cols = -traj_titles, names_to = "type", values_to = "count") %>% 
+#   ggplot(.) +
+#   geom_histogram(mapping = aes(x = count), bins = 30) +
+#   facet_wrap(~type + traj_titles, scales = "free_y") +
+#   theme_bw() +
+#   theme(axis.text = element_text(size = 6))
+# 
+# # Save.
+# ggsave(plot = osm_stats_gg, filename = "visuals/osm_plots_k6.png", height = 10, width = 12)
 
 # Save stats.
-write_csv(x = osm_stats_df, path = "data/osm_stats_rounded.csv")
+write_csv(x = osm_stats_df, path = "data/osm_stats_rounded_k6.csv")
 
 
 # What are the demographic/urban characteristics of these clusters?
