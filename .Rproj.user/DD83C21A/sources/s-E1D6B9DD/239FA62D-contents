@@ -623,6 +623,10 @@ write_csv(x = osm_full_df, path = "data/osm_full.csv")
 # Subset stats table for paper.
 osm_df <- read_csv("data/osm_stats_rounded.csv")
 
+# Correct error in
+
+
+
 osm_df <- osm_df %>% 
   select(traj_titles, starts_with("median"), starts_with("mean")) %>% 
   rename(Trajectory              = traj_titles,

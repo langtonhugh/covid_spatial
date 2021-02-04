@@ -624,15 +624,11 @@ write_csv(x = osm_full_df, path = "data/osm_full.csv")
 osm_df <- read_csv("data/osm_stats_rounded.csv")
 
 osm_df <- osm_df %>% 
-  select(traj_titles, starts_with("median"), starts_with("mean")) %>% 
-  rename(Trajectory              = traj_titles,
-         `Nightlife (median)`    = median_nightlife,
-         `Nightlife (mean)`      = mean_nightlife,
-         `Shops (median)`        = median_shops,
-         `Shops (mean)`          = mean_shops,
-         `Public Transport (median)` = median_trans,
-         `Public Transport (mean)`   = mean_trans,
-         `Bicycle parking (median)`  = median_bikes,
-         `Bicycle parking (mean)`    = mean_bikes)
+  select(traj_titles, starts_with("median")) %>% 
+  rename(Trajectory = traj_titles,
+         Nightlife  = median_nightlife,
+         Shops      = median_shops,
+         `Public Transport` = median_trans,
+         `Bicycle parking` = median_bikes)
 
 write_csv(x = osm_df, path = "data/osm_stats_sub_rounded.csv")

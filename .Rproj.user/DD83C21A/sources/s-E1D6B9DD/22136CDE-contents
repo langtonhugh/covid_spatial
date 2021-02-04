@@ -383,16 +383,14 @@ as.data.frame(table(tc_clusters_df$traj)) %>%
 # Create new label for each cluster.
 tc_clusters_df <- tc_clusters_df %>% 
   mutate(traj_titles  = ifelse(test = traj == "A", yes = "N = 23,924 (72%)", no = traj),
-         traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (26%)" , no = traj_titles),
-         traj_titles  = ifelse(test = traj == "C", yes = "N = 5,664 (3%)"  , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (25%)" , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "C", yes = "N = 944 (3%)"  , no = traj_titles),
          traj_titles  = ifelse(test = traj == "D", yes = "N = 83 (0.25%)"  , no = traj_titles),
          traj_titles  = fct_relevel(traj_titles, "N = 23,924 (72%)",
-                                                 "N = 8,124 (26%)",
-                                                 "N = 5,664 (3%)",
+                                                 "N = 8,124 (25%)",
+                                                 "N = 944 (3%)",
                                                  "N = 83 (0.25%)"))
 
-# Check.
-table(tc_clusters_df$traj_titles)
 
 # Save for Anthony
 # tc_clusters_df %>% 
@@ -566,24 +564,26 @@ tc_clusters_sub_df <- tc_clusters_df %>%
   
 # Join back with crime data.
 traj_crime_types_df <- sub_data_agg_1920_df %>% 
-  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs") %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month == "2020-03" | month == "2020-04" | month == "2020-05" |
+         month == "2020-06" | month == "2020-07" | month == "2020-08") %>% 
   left_join(tc_clusters_sub_df, by = "lsoa_code")
 
 # Calculate
 traj_crime_types_chars_df <- traj_crime_types_df %>% 
-  group_by(traj) %>% 
+  group_by(traj, month) %>% 
   mutate(traj_crimes = sum(crime_count)) %>%
   ungroup() %>% 
-  group_by(crime_type, traj) %>% 
+  group_by(crime_type, traj, month) %>% 
   mutate(traj_ct_crime = sum(crime_count)) %>% 
   ungroup() %>% 
   mutate(traj_ct_crime_prop = traj_ct_crime/traj_crimes) %>% 
-  distinct(crime_type, traj, traj_ct_crime_prop) %>% 
+  distinct(crime_type, month, traj, traj_ct_crime_prop) %>% 
   drop_na(traj) # These all belong the LSOA that we dropped from the clustering.
 
 # Check.
 traj_crime_types_chars_df %>% 
-  group_by(traj) %>% 
+  group_by(traj, month) %>% 
   summarise(sum_prop = sum(traj_ct_crime_prop))
 
 # Retrieve cluster names - they were too big for join earlier.
@@ -595,15 +595,20 @@ traj_crime_types_chars_df <- traj_crime_types_chars_df %>%
 
 # Plot.
 traj_crimes_gg <- ggplot(data = traj_crime_types_chars_df) +
-  geom_bar(mapping = aes(x = traj_titles, y = traj_ct_crime_prop, fill = crime_type),
-           stat = "identity", colour = "black") +
-  labs(y = "Proportion comprising cluster", x = NULL, fill = NULL) +
-  guides(fill = guide_legend(nrow = 4)) +
+  # geom_area(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
+  #           stat = "identity", colour = "black", size = 0.2) +
+  geom_bar(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
+            stat = "identity", colour = "black", size = 0.2) +
+  facet_wrap(~traj_titles, nrow = 4) +
+  labs(y = "Proportion comprising total crime", x = NULL, fill = NULL) +
+  scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
+  guides(fill = guide_legend(ncol = 1)) +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right", strip.background = element_rect(fill = "transparent"))
 
 # Save.
-ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 21, unit = "cm")
+# ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
 
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling.RData")
@@ -687,8 +692,6 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
        mapping = aes(x = month_fac, y = ew_crime_counts,#
                      fill = traj_titles)) +
   geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
-  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
-  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
   facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
   stat_summary(data = tc_clusters_2019_df,
                mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
@@ -702,6 +705,8 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
   stat_summary(data = tc_clusters_2018_df,
                mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
                fun = "mean", colour = "blue", linetype = "dotted", size = 0.5, geom = "line") +
+  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
+  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
   scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   labs(x = NULL, y = "crime count") +
   theme_bw() +
@@ -731,7 +736,9 @@ osm_df <- read_csv("data/osm_full.csv")
 
 # Create bus and railway station total.
 osm_df <- osm_df %>% 
-  mutate(transport_total = trains + bus)
+  mutate(transport_total = trains + bus,
+         parking_total = car_spaces + car_parkings + moto_parkings) # this measure is not reliable due to low
+                                                                    # counts, so we don't calculate stats later.
 
 # Get LSOA and cluster only.
 traj_names_df <- tc_clusters_df %>% 
@@ -745,15 +752,31 @@ osm_stats_df <- traj_names_osm_df %>%
   group_by(traj_titles) %>% 
   summarise(median_nightlife = median(nightlife_total),
             mean_nightlife   = mean(nightlife_total),
+            sd_nightlife     = sd(nightlife_total),
             median_shops     = median(shops_total),
             mean_shops       = mean(shops_total),
+            sd_shops         = sd(shops_total),
             median_trans     = median(transport_total),
-            mean_trans       = mean(transport_total))
-
-
-osm_stats_df <- osm_stats_df %>% 
+            mean_trans       = mean(transport_total),
+            sd_trans         = sd(transport_total),
+            median_bikes     = median(bikes),
+            mean_bikes       = mean(bikes),
+            sd_bikes         = sd(bikes)) %>% 
   mutate_if(is.numeric, round, 2)
-  
+
+# Stats visual.
+osm_stats_gg <- traj_names_osm_df %>% 
+  select(traj_titles, nightlife_total, shops_total, transport_total, bikes) %>% 
+  pivot_longer(cols = -traj_titles, names_to = "type", values_to = "count") %>% 
+  ggplot(.) +
+  geom_histogram(mapping = aes(x = count), bins = 30) +
+  facet_wrap(~type + traj_titles, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 6))
+
+# Save.
+ggsave(plot = osm_stats_gg, filename = "visuals/osm_plots.png", height = 10, width = 12)
+
 # Save stats.
 write_csv(x = osm_stats_df, path = "data/osm_stats_rounded.csv")
 

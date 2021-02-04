@@ -383,14 +383,16 @@ as.data.frame(table(tc_clusters_df$traj)) %>%
 # Create new label for each cluster.
 tc_clusters_df <- tc_clusters_df %>% 
   mutate(traj_titles  = ifelse(test = traj == "A", yes = "N = 23,924 (72%)", no = traj),
-         traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (25%)" , no = traj_titles),
-         traj_titles  = ifelse(test = traj == "C", yes = "N = 944 (3%)"  , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "B", yes = "N = 8,124 (26%)" , no = traj_titles),
+         traj_titles  = ifelse(test = traj == "C", yes = "N = 5,664 (3%)"  , no = traj_titles),
          traj_titles  = ifelse(test = traj == "D", yes = "N = 83 (0.25%)"  , no = traj_titles),
          traj_titles  = fct_relevel(traj_titles, "N = 23,924 (72%)",
-                                                 "N = 8,124 (25%)",
-                                                 "N = 944 (3%)",
+                                                 "N = 8,124 (26%)",
+                                                 "N = 5,664 (3%)",
                                                  "N = 83 (0.25%)"))
 
+# Check.
+table(tc_clusters_df$traj_titles)
 
 # Save for Anthony
 # tc_clusters_df %>% 
@@ -595,19 +597,19 @@ traj_crime_types_chars_df <- traj_crime_types_chars_df %>%
 
 # Plot.
 traj_crimes_gg <- ggplot(data = traj_crime_types_chars_df) +
-  # geom_area(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
-  #           stat = "identity", colour = "black", size = 0.2) +
-  geom_bar(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
+  geom_area(mapping = aes(x = month, y = traj_ct_crime_prop, group = crime_type, fill = crime_type),
             stat = "identity", colour = "black", size = 0.2) +
   facet_wrap(~traj_titles, nrow = 4) +
   labs(y = "Proportion comprising total crime", x = NULL, fill = NULL) +
   scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   guides(fill = guide_legend(ncol = 1)) +
   theme_bw() +
-  theme(legend.position = "right", strip.background = element_rect(fill = "transparent"))
+  theme(legend.position = "right", 
+        legend.text = element_text(size = 5),
+        strip.text = element_text(size = 6))
 
 # Save.
-ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 21, unit = "cm")
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 20, unit = "cm")
 # ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
 
 # Save and load workspace as appropriate.
@@ -692,6 +694,8 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
        mapping = aes(x = month_fac, y = ew_crime_counts,#
                      fill = traj_titles)) +
   geom_violin(alpha = 0.3, colour = "transparent", adjust = 2) + # to match asb - makes no difference.
+  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
+  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
   facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
   stat_summary(data = tc_clusters_2019_df,
                mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
@@ -705,8 +709,6 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
   stat_summary(data = tc_clusters_2018_df,
                mapping = aes(x = month_fac, y = ew_crime_counts, group = traj_titles),
                fun = "mean", colour = "blue", linetype = "dotted", size = 0.5, geom = "line") +
-  stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
-  stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
   scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   labs(x = NULL, y = "crime count") +
   theme_bw() +
