@@ -635,7 +635,7 @@ lsoa_ew_valid_sf <- lsoa_ew_valid_sf %>%
   mutate(conveniences = lengths(st_intersects(lsoa_ew_valid_sf, convenience_pts_complete_sf)))
 
 # subset for join
-osm_transport_df <- lsoa_ew_valid_sf %>% 
+osm_conv_df <- lsoa_ew_valid_sf %>% 
   as_tibble() %>% 
   select(-geometry, -geo_labelw, -country_cd)
 
@@ -644,7 +644,7 @@ osm_transport_df <- lsoa_ew_valid_sf %>%
 osm_df <- read_csv("data/osm_full.csv")
 
 # Join.
-osm_full_df <- left_join(osm_df, osm_transport_df)
+osm_full_df <- left_join(osm_df, osm_conv_df)
 
 # Save.
 write_csv(x = osm_full_df, path = "data/osm_full.csv")
@@ -652,17 +652,21 @@ write_csv(x = osm_full_df, path = "data/osm_full.csv")
 # Subset stats table for paper.
 osm_df <- read_csv("data/osm_stats_rounded_k6.csv")
 
-osm_df <- osm_df %>% 
-  mutate(Cluster = LETTERS[1:6]) %>% 
-  select(Cluster, starts_with("median"), starts_with("mean")) %>% 
-  rename(`Nightlife (median)`    = median_nightlife,
+names_df <- distinct(traj_names_osm_df, traj, traj_titles)
+
+osm_table_df <- osm_df %>% 
+  left_join(names_df) %>% 
+  select(traj, starts_with("median"), starts_with("mean")) %>% 
+  rename(Cluster                 = traj,
+         `Nightlife (median)`    = median_nightlife,
          `Nightlife (mean)`      = mean_nightlife,
          `Shops (median)`        = median_shops,
          `Shops (mean)`          = mean_shops,
          `Public Transport (median)` = median_trans,
          `Public Transport (mean)`   = mean_trans,
          `Bicycle parking (median)`  = median_bikes,
-         `Bicycle parking (mean)`    = mean_bikes)
+         `Bicycle parking (mean)`    = mean_bikes) %>% 
+  arrange(Cluster)
 
 
-write_csv(x = osm_df, path = "data/osm_stats_sub_rounded_k6.csv")
+write_csv(x = osm_table_df, path = "data/osm_stats_sub_rounded_k6.csv")

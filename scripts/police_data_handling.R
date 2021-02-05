@@ -283,7 +283,6 @@ raw_counts_gg <- sub_data_agg_1920_df %>%
   geom_vline(xintercept = 1.7, linetype = "dotted") +
   facet_wrap(~ crime_type, ncol = 3, scales = "free_y") +
   scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
-  # scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   scale_color_manual(values = rev(c("black", "darkgrey"))) +
   labs(x = NULL, y = NULL, colour = NULL) +
   theme_bw() +
@@ -324,7 +323,6 @@ gini_gg <- ggplot(data = gini_ct_1920_df) +
   facet_wrap(~ crime_type, ncol = 3) +
   ylim(0, 1) +
   labs(x = NULL, y = "Generalized Gini Coefficient", colour = NULL) +
-  # scale_x_discrete(labels = c(str_extract(month.name[3:8], "^.{3}"), character(1))) +
   scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
   scale_color_manual(values = rev(c("black", "darkgrey"))) +
   theme_bw() +
@@ -367,7 +365,7 @@ length(unique(tc_kmeans_sub_clean_df$lsoa_code))
 
 
 # Perform kmeans
-n <- 3:6
+n <- 3:6 # max 6 for simplicity.
 
 tc_kml_mat <- as.matrix(tc_kmeans_sub_clean_df[2:8])
 tc_traj    <- clusterLongData(traj = tc_kml_mat) 
@@ -375,7 +373,7 @@ kml(tc_traj, nbClusters = n, toPlot = "criterion", nbRedrawing = 20)
 
 # Apppend clusters back with data frame.
 tc_clusters <- cbind.data.frame(lsoa_code   = tc_kmeans_sub_clean_df$lsoa_code,
-                                 traj       = getClusters(tc_traj, 6)) # We select 4 due to CH value.
+                                 traj       = getClusters(tc_traj, 6)) # We select 6 due to CH value.
 
 tc_clusters_df <- tc_kmeans_sub_clean_df %>% 
   left_join(tc_clusters) %>% 
@@ -514,8 +512,6 @@ tc_clusters_2018_df <- sub_ew_agg_2018 %>%
                                 july     = "2018-07",
                                 august   = "2018-08"))
 
-
-
 # Violin plot with 2018 added.
 kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
                                 mapping = aes(x = month_fac, y = ew_crime_counts,#
@@ -536,7 +532,7 @@ kmeans_violin_1819_gg <- ggplot(data = tc_clusters_df,
                fun = "mean", colour = "blue", linetype = "dotted", size = 0.5, geom = "line") +
   stat_summary(aes(group = traj_titles), fun = "median", colour = "black", size = 0.8, geom = "line") +
   stat_summary(aes(group = traj_titles), fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
-  scale_x_discrete(labels = c(str_extract(month.name[3:9], "^.{3}"), character(1))) +
+  scale_x_discrete(labels = c(str_extract(month.name[2:8], "^.{3}"), character(1))) +
   labs(x = NULL, y = "crime count") +
   theme_bw() +
   theme(legend.position = "none")
@@ -546,6 +542,11 @@ ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_k6_1819_g
        height = 24, width = 20, unit = "cm", dpi = 200)
 # ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_1819_gg.png",
 #        height = 20, width = 20, unit = "cm", dpi = 200)
+
+# Save and load workspace as appropriate.
+save.image(file = "data_handling_6kmean.RData")
+# load(file = "data_handling_6kmean.RData")
+
 
 # Create proportion contribution to total crime in each month.
 tc_clusters_props_df <- tc_clusters_df %>%
@@ -709,9 +710,6 @@ ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png"
 # ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_gg.png", width = 15, height = 21, unit = "cm")
 # ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_gg.png", width = 16, height = 16, unit = "cm")
 
-# Save and load workspace as appropriate.
-# save.image(file = "data_handling_6kmean.RData")
-load(file = "data_handling.RData")
 
 # # Spatial plot of clusters (rather pointless at the national level)
 # traj_names_df <- tc_clusters_df %>% 
@@ -733,8 +731,9 @@ osm_df <- read_csv("data/osm_full.csv")
 # Create bus and railway station total.
 osm_df <- osm_df %>% 
   mutate(transport_total = trains + bus,
-         parking_total = car_spaces + car_parkings + moto_parkings) # this measure is not reliable due to low
-                                                                    # counts, so we don't calculate stats later.
+         shops_total     = shops_total + conveniences)
+         # parking_total = car_spaces + car_parkings + moto_parkings) # this measure is not reliable due to low
+                                                                      # counts, so we don't calculate stats later.
 
 # Get LSOA and cluster only.
 traj_names_df <- tc_clusters_df %>% 
