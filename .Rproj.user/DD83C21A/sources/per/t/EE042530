@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1612778874291.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3254857065",
+    "id" : "EE042530",
+    "lastKnownWriteTime" : 1612779925,
+    "last_content_update" : 1612779925195,
+    "path" : "~/GitHub/covid_spatial/scripts/police_data_handling.R",
+    "project_path" : "scripts/police_data_handling.R",
+    "properties" : {
+        "cursorPosition" : "571,0",
+        "scrollLine" : "549",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
