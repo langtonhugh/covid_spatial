@@ -573,8 +573,8 @@ ggsave(plot = kmeans_violin_1819_gg, filename = "visuals/kmeans_violin_k6_1819_g
 #        height = 20, width = 20, unit = "cm", dpi = 200)
 
 # Save and load workspace as appropriate.
-save.image(file = "data_handling_6kmean.RData")
-# load(file = "data_handling_6kmean.RData")
+# save.image(file = "data_handling_6kmean.RData")
+load(file = "data_handling_6kmean.RData")
 
 
 # Create proportion contribution to total crime in each month.
@@ -771,7 +771,37 @@ traj_names_df <- tc_clusters_df %>%
 # Join OSM data.
 traj_names_osm_df <- left_join(traj_names_df, osm_df, by = c("lsoa_code" = "geo_code"))
 
-# Descriptives.
+# Overall descriptives.
+
+osm_total_stats_df <- traj_names_osm_df %>%
+  summarise(Median_nightlife = median(nightlife_total),
+            Mean_nightlife   = mean(nightlife_total),
+            SD_nightlife     = sd(nightlife_total),
+            Min_nightlife    = min(nightlife_total),
+            Max_nightlife    = max(nightlife_total),
+            Median_shops     = median(shops_total),
+            Mean_shops       = mean(shops_total),
+            SD_shops         = sd(shops_total),
+            Min_shops        = min(shops_total),
+            Max_shops        = max(shops_total),
+            Median_transport     = median(transport_total),
+            Mean_transport       = mean(transport_total),
+            SD_transport         = sd(transport_total),
+            Min_transport        = min(transport_total),
+            Max_transport        = max(transport_total),
+            Median_bikes     = median(bikes),
+            Mean_bikes       = mean(bikes),
+            SD_bikes         = sd(bikes),
+            Min_bikes        = min(bikes),
+            Max_bikes        = max(bikes)) %>% 
+  mutate_if(is.numeric, round, 2) %>%
+  mutate(id = 1) %>% 
+  pivot_longer(cols = -id, names_to = "Facility", values_to = "value") %>% 
+  separate(col = Facility, sep = "_", into = c("statistic", "Facility")) %>% 
+  pivot_wider(id_cols = Facility, names_from = statistic, values_from = value) %>% 
+  mutate_if(is.character, str_to_title)
+
+# Cluster descriptives.
 osm_stats_df <- traj_names_osm_df %>%
   group_by(traj_titles) %>% 
   summarise(median_nightlife = median(nightlife_total),
