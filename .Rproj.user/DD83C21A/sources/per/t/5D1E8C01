@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1612861834474.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2062020211",
+    "id" : "5D1E8C01",
+    "lastKnownWriteTime" : 1612861838,
+    "last_content_update" : 1612861838739,
+    "path" : "~/GitHub/covid_spatial/refs.bib",
+    "project_path" : "refs.bib",
+    "properties" : {
+        "cursorPosition" : "565,25",
+        "scrollLine" : "549"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "text"
+}
