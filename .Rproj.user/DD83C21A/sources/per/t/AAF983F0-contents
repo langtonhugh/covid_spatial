@@ -152,9 +152,12 @@ knitr::include_graphics("visuals/change_k6_gg.png")
 
 ### Spatial distribution of clusters
 
-- List major city composition?
-- Maps of major city case studies?
-- Link to interactive map?
+- Link to interactive map
+
+```{r  maps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Spatial distribution of clusters by urban conurbation", out.width= "100%"}
+knitr::include_graphics("visuals/maps_gg.png")
+```
+
 
 ### Characteristics of clusters
 
@@ -192,10 +195,6 @@ column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5c
 - This might reflect the opportunity structures of LSOA in cluster F being weighted heavily towards theft (e.g. lots of public transport nodes).
 - At the same time, the increase share in public order may reflect other activity, such as the protests around BLM and anti-lockdown movements, which take place in city centres for coverage.
 
-```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "90%"}
-knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
-```
-
 ## Discussion
 
 - We have investigated the degree of stability and localised inequality in the lockdown crime drop between February and August in England and Wales using police-recorded crime data aggregated to local areas (LSOA).
@@ -209,3 +208,7 @@ knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
 - The crime type profile of clusters demonstrates considerable stability.
 
 ## Appendix
+
+```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "90%"}
+knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
+```
