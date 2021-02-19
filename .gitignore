@@ -3,10 +3,7 @@
 data/*
 
 # Session Data files
-data_handling.RData
-data_handling_6kmean.RData
-osm_transport.RData
-tc_asb_traj.RData
+data_handling_cleaning.RData
 tc_traj.RData
 
 # User-specific files

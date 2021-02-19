@@ -123,7 +123,7 @@ knitr::include_graphics("visuals/gini_gg.png")
 - Overall, we note that despite the dramatic nationwide trend in notifiable offences (excluding drugs), there has been remarkable stability in local areas, with most change being driven by a small number of areas.
 
 ```{r kmeansnotoff, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA notifiable offences. Mean (dotted line) and median (solid line) are shown for each cluster for 2020 (black), 2019 (red) and 2018 (blue) respectively. Distributions refer to 2020 only.", out.width= "90%"}
-knitr::include_graphics("visuals/kmeans_violin_k6_1819_gg.png")
+knitr::include_graphics("visuals/kmeans_violin_full_gg.png")
 ```
 
 #### Contribution of each cluster
@@ -168,14 +168,14 @@ knitr::include_graphics("visuals/change_k6_gg.png")
 - These findings are consistent with what is observed using the interactive map made available as part of this paper (link here).
 
 ```{r thresht, warning=F, message = F}
-osm_stats_df <- read_csv("data/osm_stats_sub_rounded_k6.csv")
+osm_stats_df <- read_csv("data/osm_stats_long.csv")
 
-osm_table <- kable(osm_stats_df, caption = "Descriptive statistics of facilities in each cluster. Sourced from Open Street Map.",
+osm_table <- kable(osm_stats_df, caption = "Descriptive statistics of facilities and features in each cluster. Sourced from Open Street Map.",
       booktabs = T, longtable = T, linesep = "", format = "latex") %>%
     kable_styling(latex_options = c("basic"),
                   font_size = 8, full_width = F)
 
-column_spec(osm_table, c(1:9), width = c("0.7cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1cm", "1cm", "1.5cm", "1cm"))
+column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm"))
 ```
 
 #### Crime type profile
