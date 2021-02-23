@@ -609,6 +609,9 @@ lsoa_ew_valid_sf <- sub_data_agg_full_df %>%
   right_join(lsoa_ew_valid_sf, by = c("lsoa_code" = "geo_code")) %>% 
   st_as_sf()
 
+# Save.
+st_write(obj = lsoa_ew_valid_sf, dsn = "data/lsoa_ew_valid_k6_sf.shp")
+
 # Selection of cities. Top 5 by population in England minus London plus Cardiff.
 birm_sf <- lsoa_ew_valid_sf %>% 
   filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Birmingham"))
@@ -638,11 +641,13 @@ cardiff_sf <- cardiff_sf %>%
 cities_list <- list(birm_sf, leeds_sf, sheff_sf, brad_sf, liver_sf, cardiff_sf)
 
 # Create map plot function.
+# Get colours manually, because not all cities have all clusters.
 map_fun <- function(x) {
   ggplot(data = x) +
     geom_sf(mapping = aes(fill = traj_titles), size = 0.0001, colour = "black", alpha = 0.8) +
     theme_void() +
-    theme(legend.position = "none")
+    theme(legend.position = "none") +
+    scale_fill_manual(values = scales::hue_pal()(6), drop = FALSE)
 }
 
 # Create plots.
@@ -653,15 +658,16 @@ maps_gg <- plot_grid(plotlist = maps_list, ncol = 2, labels = c("Birmingham", "L
                                                                 "Bradford", "Liverpool", "Cardiff"),
                      label_size = 7, scale = c(1, 1, 1.1, 1.05, 1, 1.1))
 
-# Create legend (Cardiff just used as example - any city will work).
-temp_gg <- cardiff_sf %>% 
+# Create legend (Birmingham needed as it has all 6 clusters).
+temp_gg <- birm_sf %>% 
   mutate(traj_titles = str_extract(traj_titles, "^.{3}")) %>% 
   ggplot() +
   geom_sf(mapping = aes(fill = traj_titles)) +
   theme_void() +
   labs(fill = NULL) +
   theme(legend.position = "bottom") +
-  guides(fill = guide_legend(nrow = 1)) 
+  guides(fill = guide_legend(nrow = 1)) +
+  scale_fill_manual(values = scales::hue_pal()(6), drop = FALSE)
   
 legend_gg <- get_legend(temp_gg)
 

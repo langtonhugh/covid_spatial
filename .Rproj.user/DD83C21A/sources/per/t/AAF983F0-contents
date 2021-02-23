@@ -1,5 +1,5 @@
 ---
-title: 'Instability and inequality in the COVID-19 crime drop'
+title: 'Instability and inequality in the COVID-19 lockdown crime drop'
 output: pdf_document
 bibliography: refs.bib
 csl: apa.csl
@@ -14,17 +14,11 @@ library(readr);library(kableExtra)
 
 ## Introduction
 
-- An evidence-base has begun to emerge around the impact of the COVID-19 pandemic on crime.
-- Most studies have focused on macro-level units of analysis, such as cities or countries.
-- Findings have tended to demonstrate a widespread decline in police-recorded crime.
-- The longitudinal patterns observed are largely consistent with opportunity perspectives on crime.
-- As such, we are beginning to garner a reasonable evidence-base around the impact of the pandemic lockdown on crime at the macro-level.
-- That said, less is known about the localized drivers of the fall in police-recorded crime, and the degree of which areas have experienced the lockdown crime drop in unison.
-- This challenge speaks to two strands of literature. Firstly, crime concentration research examining localized instability during crime drops [@andresen2017trajectories] and secondly, examinations of inequality in the exposure to crime in a drop scenario [@ignatans2016whom; @akmed2021mon; @mcvie2020increasing].
-- Here, we disentangle the macro-level drop in police-recorded notifiable offences (excluding drugs) in England and Wales (see Langton et al., 2021) between February and August 2020, aggregating data to neighbourhood units (N = 33,075).
-- We do this using non-parametric longitudinal clustering, which identifies areas which remained stable, even amidst nationwide volatility, and disentangles the areas which drove the initial decline and subsequent resurgence.
-- Findings are augmented with a breakdown of the facilities present in each cluster, using data sourced from Open Street Map, and the crime type profile of each cluster.
-- Results are discussed in the context of geographic inequalities and opportunity theories of crime.
+Efforts to slow the spread of COVID-19 through social distancing and restrictions on citizen mobility have induced dramatic and unprecedented changes in police-recorded crime. Studies from international case study sites including the United States, Mexico, United Kingdom and Australia have reported a decline in most crime types following the imposition of "stay at home" (or equivalent) orders [@estevez2020crime]. Generally speaking, findings have aligned with expectations from opportunity perspectives on crime. Lockdown mobility patterns disrupted the typical convergence of motivated offenders, suitable targets and capable guardians, reducing opportunities for victimization [@stickle2020crime]. As lockdown restrictions were slowly repealed, routine activities converged back to pre-pandemic levels and we witnessed a resurgence in police-recorded crime [@langton2021cs].
+
+While existing studies have provided insight into the opportunity structures of crime, and the nuances of using police data to study lockdown as a natural experiment [@stickle2020crime; @langton2021cs] research has almost exclusively been undertaken using macro-level units of analysis, such as cities or countries. Less is known about the localized drivers of the lockdown crime drop and the degree to which macro-level trends are masking geographic inequalities in victimization. Pre-pandemic research examining the (in)stability of crime at fine-grained spatial scales [@weisburd2012criminology; @curman2015crime] and inequalities in the crime drop [@mcvie2020increasing; @ignatans2016whom; @akmed2021mon] would certainly suggest that local areas are unlikely to have experienced the macro-level lockdown crime trends in unison. Rather, we might expect specific places, typically associated with high ambient populations and plentiful opportunities for crime to have driven the wider trend, with most localized areas remaining fairly stable.
+
+Examining the localized drivers of the lockdown crime drop represents the primary motivation of this paper. We disentangle the macro-level drop in police-recorded crime observed in England and Wales between February and August 2020. Using previous years as a reference point for comparison, we identify clusters of meso-level units which contributed disproportionately to the nationwide drop and subsequent resurgence in crime during lockdown. The spatial patterning, opportunity structure and crime type profile of these local areas are quantified for their consistency with theoretical expectations.
 
 ## Background
 
@@ -41,16 +35,18 @@ library(readr);library(kableExtra)
 
 ## Data and Method
 
+To examine localized instability in the lockdown crime drop, we make use of three data sources, namely, open police-recorded crime data, geographic boundaries from Ordnance Survey, and data sourced from the Open Street Map API. Each of these are now outlined in turn, followed by an outline of the methods deployed. Code to replicate the data downloads, handling, analyses and visualization reported here is openly available (https://github.com/langtonhugh/covid_spatial). 
+
 ### Crime data
 
-- Police-recorded crime data for England and Wales (excluding Greater Manchester) between February and August, covering the first six months of lockdown March to August, and the preceding month (February), for comparison.
-- Data is available for thirteen notifiable offences, and anti-social behaviour (ASB).
-- As demonstrated in Langton et al., 2021 most notifiable offences experienced dramatic declines during April, the first full month of lockdown nationwide. 
-- Exceptions are drugs and ASB.
-- We provide context and a summary of nationwide trends decomposed by crime type in terms of raw trends (counts) and concentration (Generalized Gini coefficient).
-- We then proceed with a broader 'notifiable offences (excluding drugs)' category.
+Open police-recorded data on crime and anti-social behavior in England and Wales is published through an online web portal (https://data.police.uk/). Individual records are released on a month-by-month basis for each of the 43 police forces comprising England and Wales. We used a study period spanning February to August 2020 in order to capture the first six months of the nationwide lockdown (March to August) and the one month preceding the change (February). For reference and comparison to historical trends, we obtained data for the same months in 2018 and 2019. Individual records are time-stamped by month -- the temporal scale of this study. Due to ongoing data issues with Greater Manchester Police, we exclude data from this region, and therefore collate data from 42 out of 43 forces in England and Wales.
+
+Open records categorize crime according to thirteen different notifiable offence categories (e.g. burglary, violence and sexual offences, theft from the person, vehicle crime)^[Further information on these crime categories can be obtained from https://www.police.uk/pu/contact-the-police/what-and-how-to-report/what-report/]. Records also include anti-social behaviour (ASB) which is not deemed to be notifiable offence. A count measure of the thirteen notifiable offences and ASB are used in the initial stages of analyses to provide a background overview of nationwide trends in crime and concentration before and after lockdown. For the primary analyse, we use a count measure comprised of notifiable offences excluding drug crimes. This is due to the widespread recognition that drug crime trends, particularly during the COVID-19 lockdown, largely reflect policing proactivity rather than shifts in criminal behavior [@langton2021cs]. Recognizing that aggregating data across crime types can mask variation [@andresen2017trajectories] we later decompose our findings according to the twelve remaining notifiable offences.
 
 ### Unit of analysis
+
+
+
 
 - Data is aggregated to Lower Super Output Area level, a neighborhood unit designed to be uniform by resident population (~ 1500 people), of which there are around 33,000 in England and Wales.
 - Due to some LSOA not having police.uk snap points, and one LSOA not having any police-recorded notifiable offences during the study period, we end up with a final sample/population size of N = 33,075.
@@ -103,7 +99,7 @@ knitr::include_graphics("visuals/gini_gg.png")
 
 - Based on these raw counts and Gini concentration trends over time, we might expect localized variability in notifiable offences. 
 - Have neighborhoods experienced these trends collectively and uniformly? Can we attribute most of the macro-level count trends to a handful of areas? To what extent have the dividends of the crime drop been shared equitably across the country [@akmed2021mon]?
-- What is the oppportunity structure of the areas driving nationwide trends?
+- What is the opportunity structure of the areas driving nationwide trends?
 - What is the crime type profile of the areas driving nationwide trends?
 
 ### Longitudinal clustering
@@ -154,7 +150,7 @@ knitr::include_graphics("visuals/change_k6_gg.png")
 
 - Link to interactive map
 
-```{r  maps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Spatial distribution of clusters by urban conurbation", out.width= "100%"}
+```{r  maps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Spatial distribution of clusters by major urban conurbation.", out.width= "100%"}
 knitr::include_graphics("visuals/maps_gg.png")
 ```
 
