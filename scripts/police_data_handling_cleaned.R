@@ -255,10 +255,6 @@ length(unique(sub_data_agg_2020$lsoa_code))  # 33076
 length(unique(sub_data_agg_2019$lsoa_code))  # 33076
 length(unique(sub_data_agg_2018$lsoa_code))  # 33076
 
-# Save workspace.
-# save.image(file = "data_handling_cleaning.RData")
-load(file = "data_handling_cleaning.RData")
-
 # Combine 2018, 2019 and 2020 datasets for next steps.
 sub_data_agg_full_df <- bind_rows(sub_data_agg_2018, sub_data_agg_2019, sub_data_agg_2020)
 
@@ -273,7 +269,7 @@ total_crime_agg_df <- sub_data_agg_full_df %>%
   group_by(month, year) %>% 
   summarise(ew_crime_count = sum(crime_count)) %>% 
   ungroup() %>% 
-  mutate(crime_type = "Total crime (excl. drugs)") %>% 
+  mutate(crime_type = "Notifiable offences (excl. drugs)") %>% 
   select(crime_type, year, month, ew_crime_count) %>% 
   separate(month, into = c("year", "month"), sep = "-") %>% 
   filter(month != "01", month != "09", month != "10", month != "11", month != "12") 
@@ -312,7 +308,7 @@ gini_total_crime_df <- sub_data_agg_full_df %>%
   summarise(gini_coef = gini(crime_count, generalized = TRUE, unbiased = TRUE)) %>% 
   ungroup() %>% 
   separate(month, into = c("year","month"), sep = "-") %>% 
-  mutate(crime_type = "Total crime (excl. drugs)") %>% 
+  mutate(crime_type = "Notifiable offences (excl. drugs)") %>% 
   select(crime_type, gini_coef, year,  month)
 
 # Do the same but by crime type and add the total crime category on.
@@ -344,6 +340,25 @@ gini_gg <- ggplot(data = gini_crime_type_df) +
 
 # Save.
 ggsave(plot = gini_gg, filename = "visuals/gini_gg.png", width = 14, height = 20, units = "cm", dpi = 600)
+
+# Long-term trends for public order.
+long_term_gg <- sub_data_agg_full_df %>% 
+  filter(crime_type == "Public order" | crime_type == "Violence and sexual offences" |
+         crime_type == "Other crime",
+         month != "2020-09" & month != "2020-10" & month != "2020-11") %>% 
+  group_by(crime_type, month, year) %>% 
+  summarise(ew_crime_count = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(year = recode_factor(year, "2018" = "2018", "2019" = "2019", "2020" = "2020")) %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = month, y = ew_crime_count, group = 1)) +
+  geom_vline(xintercept = 27, linetype = "dotted") +
+  facet_wrap(~crime_type, nrow = 3, scales = "free_y") +
+  labs(y = "Counts", x = NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+  
+ggsave(plot = long_term_gg, filename = "visuals/long_term_gg.png", height = 20, width = 20, unit = "cm")
 
 # Remove object to free up memory if needed.
 rm(total_crime_agg_df, gini_total_crime_df, gini_crime_type_df, gini_gg, raw_counts_gg)
@@ -440,33 +455,35 @@ tc_clusters_agg_df <- sub_data_agg_full_df %>%
          month_name = fct_relevel(month_name, month.name[2:8])) 
 
 # Violin plot. Filter for years as we go.
-kmeans_violin_full_gg <- ggplot() +
+kmeans_violin_full_gg <- ggplot() + theme_bw() +
   geom_violin(data = filter(tc_clusters_agg_df, year == "2020"),
               mapping = aes(x = month_name, y = ew_crime_count, fill = traj_titles),
               alpha = 0.3, colour = "transparent", adjust = 2) + 
-  stat_summary(data = filter(tc_clusters_agg_df, year == "2019"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "median", colour = "red", size = 0.8, geom = "line") +
-  stat_summary(data = filter(tc_clusters_agg_df, year == "2019"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "mean", colour = "red", linetype = "dotted", size = 0.8, geom = "line") +
+  scale_fill_hue(guide = FALSE) +
   stat_summary(data = filter(tc_clusters_agg_df, year == "2018"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "median", colour = "blue", size = 0.8, geom = "line") +
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "red"),
+               fun = "median",  size = 0.8, geom = "line") +
   stat_summary(data = filter(tc_clusters_agg_df, year == "2018"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "mean", colour = "blue", linetype = "dotted", size = 0.8, geom = "line") +
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "red"),
+               fun = "mean", linetype = "dotted", size = 0.8, geom = "line") +
+  stat_summary(data = filter(tc_clusters_agg_df, year == "2019"),
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "blue"),
+               fun = "median",  size = 0.8, geom = "line") +
+  stat_summary(data = filter(tc_clusters_agg_df, year == "2019"),
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "blue"),
+               fun = "mean", linetype = "dotted", size = 0.8, geom = "line") +
   stat_summary(data = filter(tc_clusters_agg_df, year == "2020"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "median", colour = "black", size = 0.8, geom = "line") +
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "black"),
+               fun = "median", size = 0.8, geom = "line") +
   stat_summary(data = filter(tc_clusters_agg_df, year == "2020"),
-               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles),
-               fun = "mean", colour = "black", linetype = "dotted", size = 0.8, geom = "line") +
+               mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "black"),
+               fun = "mean", linetype = "dotted", size = 0.8, geom = "line") +
+  scale_colour_manual(values = rev(c("red", "blue", "black")), labels = rev(c("2019", "2018", "2020"))) +
   facet_wrap(~traj_titles, ncol = 2, scales = "free_y") +
   scale_x_discrete(labels = c(str_extract(month.name[2:8], "^.{3}"), character(1))) +
-  labs(x = NULL, y = "crime count") +
-  theme_bw() +
-  theme(legend.position = "none")
+  labs(x = NULL, colour = NULL, y = "crime count") +
+  guides(colour = guide_legend(nrow = 1)) +
+  theme(legend.position = "bottom")
 
 # Save full plot.
 ggsave(plot = kmeans_violin_full_gg, filename = "visuals/kmeans_violin_full_gg.png",
