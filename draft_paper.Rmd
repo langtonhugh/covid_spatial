@@ -98,12 +98,8 @@ Figure 3 visualizes the overall level of concentration across these offence type
 
 Based on the dramatic decline and subsequent resurgence of notifiable offences (excluding drugs) during the study period, we might expect some localized variability. Measures of concentration indicate that there has been stability at the 'global' level, but the evidence-base surrounding the law of crime concentration and micro-place (in)stability would certainly give reason to suspect that this masks underlying volatility [@weisburd2015law; @andresen2017trajectories].
 
-```{r crimeoverall, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Macro-level crime trends in England and Wales during the lockdown period in 2020."}
-knitr::include_graphics("visuals/raw_counts_gg.png")
-```
-
-```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Measure of concentration using the generalized Gini coefficient during the lockdown period."}
-knitr::include_graphics("visuals/gini_gg.png")
+```{r nocounts, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Macro-level crime trends in England and Wales during the lockdown period in 2020."}
+knitr::include_graphics("visuals/no_raw_counts_gg.png")
 ```
 
 ## Longitudinal clustering
@@ -208,6 +204,14 @@ column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5c
 - The crime type profile of clusters demonstrates considerable stability.
 
 # Appendix
+
+```{r crimeoverall, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Macro-level crime trends in England and Wales during the lockdown period in 2020."}
+knitr::include_graphics("visuals/raw_counts_gg.png")
+```
+
+```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Measure of concentration using the generalized Gini coefficient during the lockdown period."}
+knitr::include_graphics("visuals/gini_gg.png")
+```
 
 ```{r longterm, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Select crime types with long-term increases in counts.", out.width= "90%"}
 knitr::include_graphics("visuals/long_term_gg.png")

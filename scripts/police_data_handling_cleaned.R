@@ -273,7 +273,25 @@ total_crime_agg_df <- sub_data_agg_full_df %>%
   select(crime_type, year, month, ew_crime_count) %>% 
   separate(month, into = c("year", "month"), sep = "-") %>% 
   filter(month != "01", month != "09", month != "10", month != "11", month != "12") 
-  
+
+# Single plot for notifiable offences.
+no_raw_counts_gg <- ggplot(data = total_crime_agg_df) +
+  geom_line(mapping = aes(x = month, y = ew_crime_count, group = year, colour = year), size = 0.8) +
+  geom_vline(xintercept = 1.7, linetype = "dotted") +
+  scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
+  scale_color_manual(values = rev(c("black", "darkgrey", "lightgrey"))) +
+  labs(x = NULL, y = "Count", colour = NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 6), #, hjust = -0.4
+        axis.ticks = element_line(size = 0.3, lineend = "round"),
+        axis.text.y = element_text(size = 6),
+        strip.text = element_text(size = 8),
+        strip.background = element_rect(fill = "transparent"),
+        legend.position = "bottom")
+
+# Save.
+ggsave(plot = no_raw_counts_gg, filename = "visuals/no_raw_counts_gg.png", width = 10, height = 8, unit = "cm")
+
 # Then calculate these counts by crime type, bind the total crime data frame to it, and visualise.
 raw_counts_gg <- sub_data_agg_full_df %>% 
   group_by(crime_type, month, year) %>% 
@@ -309,7 +327,28 @@ gini_total_crime_df <- sub_data_agg_full_df %>%
   ungroup() %>% 
   separate(month, into = c("year","month"), sep = "-") %>% 
   mutate(crime_type = "Notifiable offences (excl. drugs)") %>% 
-  select(crime_type, gini_coef, year,  month)
+  select(crime_type, gini_coef, year,  month) %>% 
+  filter(month != "01", month != "09", month != "10", month != "11", month != "12") %>% 
+  mutate(year = recode_factor(year, "2018" = "2018", "2019" = "2019", "2020" = "2020")) 
+
+# Single plot for notifiable offences.
+no_gini_gg <- ggplot(data = gini_total_crime_df) +
+  geom_line(mapping = aes(x = month, y = gini_coef, group = year, colour = year), size = 0.8) +
+  geom_vline(xintercept = 1.7, linetype = "dotted") +
+  ylim(0, 1) +
+  labs(x = NULL, y = "Generalized Gini Coefficient", colour = NULL) +
+  scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
+  scale_color_manual(values = rev(c("black", "darkgrey", "lightgrey"))) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 6), #, hjust = -0.4
+        axis.ticks = element_line(size = 0.3, lineend = "round"),
+        axis.text.y = element_text(size = 6),
+        strip.text = element_text(size = 8),
+        strip.background = element_rect(fill = "transparent"),
+        legend.position = "bottom")
+
+# Save.
+ggsave(plot = no_gini_gg, filename = "visuals/no_gini_gg.png", width = 10, height = 8, unit = "cm")
 
 # Do the same but by crime type and add the total crime category on.
 gini_crime_type_df <- sub_data_agg_full_df %>%
