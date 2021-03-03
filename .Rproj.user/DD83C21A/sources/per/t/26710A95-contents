@@ -692,8 +692,9 @@ cities_list <- list(birm_sf, leeds_sf, sheff_sf, brad_sf, liver_sf, cardiff_sf)
 map_fun <- function(x) {
   ggplot(data = x) +
     geom_sf(mapping = aes(fill = traj_titles), size = 0.0001, colour = "black", alpha = 0.8) +
-    theme_void() +
-    theme(legend.position = "none") +
+    theme_minimal() +
+    theme(legend.position = "none",
+          axis.text = element_text(size = 4)) +
     scale_fill_manual(values = scales::hue_pal()(6), drop = FALSE)
 }
 
@@ -703,7 +704,7 @@ maps_list <- lapply(cities_list, map_fun)
 # Plot appearance.
 maps_gg <- plot_grid(plotlist = maps_list, ncol = 2, labels = c("Birmingham", "Leeds", "Sheffield",
                                                                 "Bradford", "Liverpool", "Cardiff"),
-                     label_size = 7, scale = c(1, 1, 1.1, 1.05, 1, 1.1))
+                     label_size = 7, scale = c(1, 1, 1.1, 1.05, 0.9, 1.1))
 
 # Create legend (Birmingham needed as it has all 6 clusters).
 temp_gg <- birm_sf %>% 
