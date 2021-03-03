@@ -134,7 +134,9 @@ The 'low crime and stable' clusters (A and B) actually _declined again_ between 
 knitr::include_graphics("visuals/change_k6_gg.png")
 ```
 
-## Spatial distribution of clusters
+## Characteristics of clusters
+
+# Spatial distribution
 
 The provide local context to the cluster solutions identified through the k-means clustering, we visualize the spatial patterning of groupings for six major cities in England and Wales (see Figure 5). We find distinct geographic pattern to the clusters identified. Here, it is worth noting that the Bradford region contains the city of Bradford, but also the satellite town of Keighley to the north west. The cluster map thus reflects these two urban centers. Without exception, the city centres and commercial districts of each city are characterised by 'high crime major drop' clusters E and F, which in turn often neighbor the 'mid crime mid drop' cluster D. By contrast, the 'low crime and stable' clusters tend to sit outside of the city centres: cluster B in the suburbs and the sparsely populated cluster A LSOA on the periphery of urban conurbations. For a detailed investigation of the spatial clusters identified for the whole of England and Wales, we refer readers to an openly available online map (anonymized link here).
 
@@ -143,16 +145,11 @@ knitr::include_graphics("visuals/maps_gg.png")
 ```
 
 
-## Characteristics of clusters
+# Opportunity structure
 
-- We have now identified that, amidst dramatic nationwide change in notifiable offences during lockdown, and stability in overall crime concentrations, there has been considerable underlying volatility, with a small number of local areas driving the macro-level trends.
-- From an opportunity perspective, we expect the clusters to have differing opportunity structures.
-- For instance, LSOA which were typically 'high crime' in 2018 and 2019, and then experienced a dramatic fall in crime upon lockdown commencement, are likely to have a large volume of criminal opportunities which were closed off following restrictions on mobility.
-- On the other hand, areas which were typically low crime, and remained low crime, are likely to have a vastly different opportunity structure: places with minimal attractors or generators to begin with are unlikely to have changed dramatically during lockdown.
-- Table 1 demonstrates this point using the data obtained from Open Street Map.
-- Clusters A and B, the 'low crime and stable' LSOAs, tend to have few major opportunities for crime. Few pubs, nightclubs or restaurants to generate a violence and theft-prone nightlife, minimal shopping opportunities (and thus less chance of shoplifting), limited public transport (less theft) and less bicycle parking (less bicycle theft).
-- By contrast, the 'high crime major drop' clusters (e.g. E and F) are major nightlife areas, have considerable shopping opportunities, often have expansive public transport networks, and have many bicycle parking facilities.
-- These findings are consistent with what is observed using the interactive map made available as part of this paper (link here).
+We have now identified that, amidst dramatic nationwide change in notifiable offences during lockdown, and stability in overall crime concentrations, there has been considerable underlying volatility, with a small number of local areas driving the macro-level trend. From a theoretical perspective, we expect the clusters to have differing opportunity structures. Table 1 reports a series of descriptive statistics based on the opportunity structure of each cluster using the nationwide data obtained from the Open Street Map API. These findings largely support our expectations, namely, that large, stable clusters have few opportunities for crime, while high crime areas which were responsible for a disproportionately large amount of the crime drop have plentiful features which facilitate crime.
+
+By way of example, there are sparse opportunities for crime in the largest and most stable cluster A. Most LSOA in this cluster have no nightlife facilities, no shops and no bicycle parking. Public transport is available but it is not common: the median LSOA in cluster A only contained four bus stops or railways stations. As we move along to medium and high crime clusters, which had higher pre-existing crime levels, and thus steeper declines during lockdown, these counts markedly increase. For instance, LSOA in cluster E contain a median of 21 nightlife facilities, 28 shops, 24 public transport nodes and 13 bicycle parking spaces. These counts increase further for cluster F, although we note that the cluster contains only nine LSOA. 
 
 ```{r thresht, warning=F, message = F}
 osm_stats_df <- read_csv("data/osm_stats_long.csv")
@@ -165,7 +162,7 @@ osm_table <- kable(osm_stats_df, caption = "Descriptive statistics of facilities
 column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm"))
 ```
 
-### Crime type profile
+# Crime type profile
 
 - For the purposes of simplicity and setting a benchmark, we have been using a measure of 'notifiable offences excluding drugs' for analysis.
 - That said, we might expect the clusters identified to have different crime type profiles.
@@ -178,6 +175,10 @@ column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5c
 - In cluster F, we see a unique pattern, whereby theft from the person and other theft are squeezed considerably into April and May, while the share of public order increased.
 - This might reflect the opportunity structures of LSOA in cluster F being weighted heavily towards theft (e.g. lots of public transport nodes).
 - At the same time, the increase share in public order may reflect other activity, such as the protests around BLM and anti-lockdown movements, which take place in city centres for coverage.
+
+```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "100%", fig.align='center'}
+knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
+```
 
 # Discussion
 
@@ -193,20 +194,16 @@ column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5c
 
 # Appendix
 
-```{r crimeoverall, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Counts by offence type in England and Wales during the lockdown period."}
+```{r crimeoverall, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Counts by offence type in England and Wales during the lockdown period.", fig.align='center'}
 knitr::include_graphics("visuals/raw_counts_gg.png")
 ```
 
-```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Monthly generalized Gini cofficient trends by offence type in England and Wales during the lockdown period."}
+```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Monthly generalized Gini cofficient trends by offence type in England and Wales during the lockdown period.", fig.align='center'}
 knitr::include_graphics("visuals/gini_gg.png")
 ```
 
-```{r longterm, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Select crime types with long-term increases in counts.", out.width= "90%"}
+```{r longterm, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Select crime types with long-term increases in counts.", out.width= "90%", fig.align='center'}
 knitr::include_graphics("visuals/long_term_gg.png")
-```
-
-```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "90%"}
-knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
 ```
 
 # References

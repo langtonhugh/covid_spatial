@@ -631,18 +631,28 @@ traj_crime_types_df <- traj_crime_types_df %>%
   left_join(traj_names_df)
 
 # Plot.
-traj_crimes_gg <- ggplot(data = traj_crime_types_df) +
+traj_crimes_gg <- ggplot(data = traj_crime_types_df) + 
+  theme_bw() +
   geom_bar(mapping = aes(x = month, y = traj_ct_prop, group = crime_type, fill = crime_type),
             stat = "identity", colour = "black", size = 0.2) +
-  facet_wrap(~traj_titles, ncol = 2) +
+  facet_wrap(~traj_titles, ncol = 6) +
   labs(y = "Proportion comprising total crime", x = NULL, fill = NULL) +
   scale_x_discrete(labels = c(str_extract(month.name[2:8], "^.{3}"), character(1))) +
-  guides(fill = guide_legend(ncol = 3)) +
-  theme_bw() +
-  theme(legend.position = "bottom", strip.background = element_rect(fill = "transparent"))
+  guides(fill = guide_legend(nrow = 2)) +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 5),
+        strip.background = element_rect(fill = "transparent", size = 0.2),
+        strip.text = element_text(size = 6),
+        axis.text.y = element_text(size = 5),
+        axis.text.x = element_text(size = 5, angle = 90, vjust = 0.2),
+        axis.title = element_text(size = 6),
+        axis.ticks = element_line(size = 0.3),
+        panel.border = element_rect(size = 0.3),
+        legend.key.width = unit(0.3, "cm"),
+        legend.key.height = unit(0.3, "cm"))
 
 # Save.
-ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png", width = 16, height = 24, unit = "cm")
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png", width = 16, height = 5, unit = "cm")
 
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling_cleaning.RData")
