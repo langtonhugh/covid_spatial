@@ -537,20 +537,13 @@ change_df <- tc_clusters_agg_df %>%
   mutate(total_crimes = sum(traj_crimes),         # sum crimes across all trajectories (i.e. count per month in e&w)
          month_name   = tolower(month_name)) %>%  # lower case for code rather than labels
   pivot_wider(id_cols = traj_titles, names_from = month_name, values_from = c(traj_crimes, total_crimes)) %>% 
-  select(traj_titles,
-         traj_crimes_february,
-         traj_crimes_march, traj_crimes_april, traj_crimes_may, 
-         traj_crimes_june, traj_crimes_july, traj_crimes_august,
-         total_crimes_february,
-         total_crimes_march, total_crimes_april, total_crimes_may, 
-         total_crimes_june, total_crimes_july, total_crimes_august) %>% 
   mutate(traj_feb_mar = traj_crimes_march-traj_crimes_february,
          traj_mar_apr = traj_crimes_april-traj_crimes_march,
          traj_apr_may = traj_crimes_may-traj_crimes_april,
          traj_may_jun = traj_crimes_june-traj_crimes_may,
          traj_jun_jul = traj_crimes_july-traj_crimes_june,
          traj_jul_aug = traj_crimes_august-traj_crimes_july,
-         tot_feb_mar  = sum(abs(traj_feb_mar)),
+         tot_feb_mar  = sum(abs(traj_feb_mar)), # This actually the same as just doing it with totals.
          tot_mar_apr  = sum(abs(traj_mar_apr)),
          tot_apr_may  = sum(abs(traj_apr_may)),
          tot_may_jun  = sum(abs(traj_may_jun)),
