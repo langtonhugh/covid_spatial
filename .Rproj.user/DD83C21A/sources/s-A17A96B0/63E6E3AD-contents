@@ -427,8 +427,9 @@ length(unique(tc_kmeans_sub_clean_df$lsoa_code))
 
 # Perform kmeans analysis on the February to August 2020 counts.
 
-# Restrict potential maximum to 6 for simplicity.
-n <- 3:6 
+# Choose array of possible clusters.
+# n <- 3:6 
+n <- 2:8
 
 # Set seed.
 set.seed(1612)
@@ -652,7 +653,25 @@ traj_crimes_gg <- ggplot(data = traj_crime_types_df) +
         legend.key.height = unit(0.3, "cm"))
 
 # Save.
-ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png", width = 16, height = 5, unit = "cm")
+ggsave(plot = traj_crimes_gg, filename = "visuals/traj_crimes_monthly_k6_gg.png", width = 16, height = 8, unit = "cm")
+
+# Absolute crime profile plots.
+
+# Subset only the study period February to August 2020, calculate crime type % composition of each cluster.
+traj_crime_types_counts_df <- sub_data_agg_full_df %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month == "2020-02" | month == "2020-03" | month == "2020-04" | month == "2020-05" |
+          month == "2020-06" | month == "2020-07" | month == "2020-08") %>% 
+  group_by(traj_titles, month, crime_type) %>% 
+  summarise(traj_crimes = mean(crime_count)) %>% 
+  ungroup() 
+
+# Plot.
+traj_crimes_count_gg <- traj_crime_types_counts_df %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = month, y = traj_crimes, colour = crime_type, group = crime_type)) +
+  facet_wrap(~traj_titles, nrow = 6, scales = "free_y") +
+  theme(legend.position = "none")
 
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling_cleaning.RData")
