@@ -4,8 +4,6 @@ data/*
 
 # Session Data files
 data_handling_cleaning.RData
-tc_traj.RData
-tc_traj.Rdata
 
 # User-specific files
 .Ruserdata
