@@ -12,11 +12,14 @@ library(stringr)
 library(forcats)
 library(ggplot2)
 library(sf)
+library(factoextra)
 
 # Useful function.
 `%nin%` <- Negate(`%in%`)
 
+
 # Archive data downloaded January 2012, covering the 3-year period up to and including November 2020.
+# if(!file.exists('data')){dir.create("data")}
 # download.file(url = "https://data.police.uk/data/archive/2020-11.zip", destfile = "data/archive2020-11.zip")
 
 # Unzip.
@@ -261,7 +264,7 @@ sub_data_agg_full_df <- bind_rows(sub_data_agg_2018, sub_data_agg_2019, sub_data
 # Remove objects to free up memory if needed.
 rm(sub_data_agg_2018, sub_data_agg_2019, sub_data_agg_2020)
 
-# Create raw counts plot, comparing trends across years.
+######### Create raw counts plot, comparing trends across years.#########
 
 # First, create a small, identical data frame with total notifiable offences as a 'crime type' (excluding drugs).
 total_crime_agg_df <- sub_data_agg_full_df %>%
@@ -398,7 +401,7 @@ ggsave(plot = long_term_gg, filename = "visuals/long_term_gg.png", height = 20, 
 # Remove object to free up memory if needed.
 rm(total_crime_agg_df, gini_total_crime_df, gini_crime_type_df, gini_gg, raw_counts_gg)
 
-# Prepare the data for the longitudinal k-means.
+######## Prepare the data for the longitudinal k-means.########
 
 # Subset for the study period (February to August) and aggregate crime counts across 
 # categories, excluding ASB and drugs.
@@ -429,15 +432,48 @@ length(unique(tc_kmeans_sub_clean_df$lsoa_code))
 
 # Choose array of possible clusters.
 # n <- 3:6 
-n <- 2:8
+n <- 3:10 
 
 # Set seed.
 set.seed(1612)
 
-# Convert to matrix, cluster data, and perform kmeans on all potential clusters from 3 to 6.
+# Convert to matrix, cluster data, and perform kmeans on all potential clusters from 3 to 10.
 tc_kml_mat <- as.matrix(tc_kmeans_sub_clean_df[2:8])
 tc_traj    <- clusterLongData(traj = tc_kml_mat) 
 kml(tc_traj, nbClusters = n, toPlot = "criterion", nbRedrawing = 20)
+#save(tc_traj, , file = 'results/tc_traj.Rdata') #save the file as it takes along time to compute.
+
+######## Cluster investigation - which k ########
+# select the number of cluters to investigate.
+K_clusters_to_investigate = c(4,5,6)
+
+#iterate through the number of cluster
+# retrieve cluster details
+# join LSOA data with the cluster details
+# conduct Principal Componet Analysis
+# Plot to show variance explained by each eigen value
+# --- note the first eigenvalue seems to account for around 80% of variance which is good for 2d plotting
+# Plot clusters with colours in 2d (from eight?) I think they are ggplot objects.
+
+for(i in K_clusters_to_investigate){
+tc_clusters_df <- cbind.data.frame(lsoa_code = tc_kmeans_sub_clean_df$lsoa_code,
+                                   traj      = getClusters(tc_traj, i))
+pca_df <- left_join(tc_kmeans_sub_clean_df, tc_clusters_df)
+res_pca = prcomp(pca_df[,2:8], scale = TRUE)
+
+fviz_eig(res_pca)
+
+groups = pca_df$traj
+fviz_pca_ind(res_pca,
+             geom = "point",
+             col.ind = groups,
+             jitter = list(what = "label", width = 0.2, height = 0.2),
+             repel = TRUE 
+)
+
+}
+
+######### Analysis of selected clusters (6) #############
 
 # Collate LSOA codes and cluster labels into a data frame.
 tc_clusters_df <- cbind.data.frame(lsoa_code = tc_kmeans_sub_clean_df$lsoa_code,
@@ -673,11 +709,94 @@ traj_crimes_count_gg <- traj_crime_types_counts_df %>%
   facet_wrap(~traj_titles, nrow = 6, scales = "free_y") +
   theme(legend.position = "none")
 
+######## Year on Year changes - cluster analysis #######
+
+# this section investigate the y-on-y changes at the cluster level
+
+# reconfigure data into wide format as easier for calculations
+yoy_change_df <- sub_data_agg_full_df %>%
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs")%>% 
+  group_by(month, year, traj, traj_titles) %>% 
+  summarise(ew_crime_count = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(month = str_sub(month, 6,-1)) %>%
+  pivot_wider(names_from = month, values_from = ew_crime_count)
+
+# produce matrix for each year. Cluster and months.
+
+matrix_2019 = as.matrix(yoy_change_df[ 7:12, 5:11])  # select feb to aug inc
+
+matrix_2020 = as.matrix(yoy_change_df[ 13:18, 5:11])  # select feb to aug inc
+
+
+## heat map 1 - the difference in absolute crime numbers.
+# not surpisingly the bigger clusters saw the bigger changes, but only by a factor of circa 5
+
+diff_20_19 = matrix_2020 - matrix_2019
+
+
+diff_20_19 = as.data.frame(diff_20_19)
+names(diff_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
+diff_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
+
+
+d2p = pivot_longer(diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'count_change')
+
+d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
+
+ggplot(data = d2p, aes(x=month, y=Cluster, fill=count_change)) + 
+  geom_tile()+
+  geom_text(aes(x=month, y=Cluster, label=round(count_change,2)), color = "white", size = 4) 
+
+
+
+## heatmap 2 The average change in crime per cluter
+
+
+diff_20_19 = matrix_2020 - matrix_2019
+
+for ( i in 1:nrow(diff_20_19)){
+  diff_20_19[i,] = (diff_20_19[i,] )/ cluster_counts$Freq[i]
+  
+}
+
+per_20_19 = as.data.frame(diff_20_19)
+
+names(per_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
+per_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
+
+
+d2p = pivot_longer(per_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'rel_count_change')
+
+d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
+
+ggplot(data = d2p, aes(x=month, y=Cluster, fill=rel_count_change)) + 
+  geom_tile()+
+  geom_text(aes(x=month, y=Cluster, label=round(rel_count_change,2)), color = "white", size = 4) 
+
+
+### heat map 3 - the relative changes in crime
+
+rel_diff_20_19 =  as.data.frame(100*((matrix_2020 - matrix_2019) / matrix_2019))
+
+names(rel_diff_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
+rel_diff_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
+
+d2p = pivot_longer(rel_diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'percent_change')
+
+d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
+
+ggplot(data = d2p, aes(x=month, y=Cluster, fill=percent_change)) + 
+  geom_tile()+
+  geom_text(aes(x=month, y=Cluster, label=round(percent_change,2)), color = "white", size = 4) 
+
+
+
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling_cleaning.RData")
 load(file = "data_handling_cleaning.RData")
 
-# Maps of major cities.
+######## Maps of major cities ########
 
 # Join cluster information with lsoa sf object.
 lsoa_ew_valid_sf <- sub_data_agg_full_df %>% 

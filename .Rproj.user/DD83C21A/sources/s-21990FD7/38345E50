@@ -5,15 +5,15 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "1697917072",
+    "hash" : "0",
     "id" : "38345E50",
-    "lastKnownWriteTime" : 1614855175,
-    "last_content_update" : 1614855175939,
+    "lastKnownWriteTime" : 1614943069,
+    "last_content_update" : 1614943069954,
     "path" : "~/GitHub/covid_spatial/refs.bib",
     "project_path" : "refs.bib",
     "properties" : {
-        "cursorPosition" : "675,6",
-        "scrollLine" : "660"
+        "cursorPosition" : "478,6",
+        "scrollLine" : "470"
     },
     "read_only" : false,
     "read_only_alternatives" : [
