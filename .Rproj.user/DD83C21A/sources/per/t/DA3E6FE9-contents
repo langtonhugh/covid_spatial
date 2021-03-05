@@ -483,7 +483,7 @@ tc_clusters_df <- cbind.data.frame(lsoa_code = tc_kmeans_sub_clean_df$lsoa_code,
 as.data.frame(table(tc_clusters_df$traj)) %>% 
   mutate(total = sum(Freq),
          prop  = 100*Freq/total)
-  
+
 # Create new label for each cluster. Convert to tibble along the way.
 tc_clusters_df <- tc_clusters_df %>% 
   as_tibble() %>% 
@@ -728,69 +728,85 @@ matrix_2019 = as.matrix(yoy_change_df[ 7:12, 5:11])  # select feb to aug inc
 
 matrix_2020 = as.matrix(yoy_change_df[ 13:18, 5:11])  # select feb to aug inc
 
+## Heat maps: difference between 2019 and 2020 by month and cluster.
+# Data handling for absolute count achange and average count change.
+diff_20_19 <-  matrix_2020 - matrix_2019
+diff_20_19 <-  as.data.frame(diff_20_19)
+names(diff_20_19) <-  c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
+diff_20_19$Cluster <-  c('A', 'B', 'C' ,'D' ,'E' ,'F' )
+d2p <-  pivot_longer(diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'count_change')
 
-## heat map 1 - the difference in absolute crime numbers.
-# not surpisingly the bigger clusters saw the bigger changes, but only by a factor of circa 5
+d2p$month <-  factor(d2p$month,, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
+# diff_20_19$Cluster <-  factor(diff_20_19$Cluster, levels = c('A', 'B', 'C' ,'D' ,'E' ,'F' )) 
 
-diff_20_19 = matrix_2020 - matrix_2019
-
-
-diff_20_19 = as.data.frame(diff_20_19)
-names(diff_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
-diff_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
-
-
-d2p = pivot_longer(diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'count_change')
-
-d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
-
-ggplot(data = d2p, aes(x=month, y=Cluster, fill=count_change)) + 
-  geom_tile()+
-  geom_text(aes(x=month, y=Cluster, label=round(count_change,2)), color = "white", size = 4) 
-
-
-
-## heatmap 2 The average change in crime per cluter
+d2p <- d2p %>% 
+  mutate(n_lsoa = if_else(Cluster == "A", "19162", Cluster),
+         n_lsoa = if_else(Cluster == "B", "10087", n_lsoa),
+         n_lsoa = if_else(Cluster == "C", "3184" , n_lsoa),
+         n_lsoa = if_else(Cluster == "D", "533"   , n_lsoa),
+         n_lsoa = if_else(Cluster == "E", "101"   , n_lsoa),
+         n_lsoa = if_else(Cluster == "F", "9"     , n_lsoa),
+         n_lsoa = as.numeric(n_lsoa),
+         av_change = round(count_change/n_lsoa, 2),
+         Cluster   = fct_relevel(Cluster, "F", "E", "D", "C", "B", "A"))
 
 
-diff_20_19 = matrix_2020 - matrix_2019
+count_diff_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill = count_change)) + 
+  geom_tile() +
+  # geom_text(mapping = aes(label = round(count_change, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(direction = -1) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = NULL) +
+  theme(legend.position = "bottom",
+        axis.text = element_text(size = 5),
+        axis.title = element_text(size = 5),
+        axis.ticks = element_line(size = 0.2),
+        legend.key.height = unit(0.2, "cm"),
+        legend.text = element_text(size = 5))
 
-for ( i in 1:nrow(diff_20_19)){
-  diff_20_19[i,] = (diff_20_19[i,] )/ cluster_counts$Freq[i]
-  
-}
-
-per_20_19 = as.data.frame(diff_20_19)
-
-names(per_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
-per_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
-
-
-d2p = pivot_longer(per_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'rel_count_change')
-
-d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
-
-ggplot(data = d2p, aes(x=month, y=Cluster, fill=rel_count_change)) + 
-  geom_tile()+
-  geom_text(aes(x=month, y=Cluster, label=round(rel_count_change,2)), color = "white", size = 4) 
-
-
-### heat map 3 - the relative changes in crime
-
-rel_diff_20_19 =  as.data.frame(100*((matrix_2020 - matrix_2019) / matrix_2019))
-
-names(rel_diff_20_19) = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
-rel_diff_20_19$Cluster = c('A', 'B', 'C' ,'D' ,'E' ,'F' )
-
-d2p = pivot_longer(rel_diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'percent_change')
-
-d2p$month = factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
-
-ggplot(data = d2p, aes(x=month, y=Cluster, fill=percent_change)) + 
-  geom_tile()+
-  geom_text(aes(x=month, y=Cluster, label=round(percent_change,2)), color = "white", size = 4) 
+av_diff_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill = av_change)) + 
+  geom_tile() +
+  # geom_text(mapping = aes(label = round(av_change, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(direction = -1) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = NULL) +
+  theme(legend.position = "bottom",
+        axis.text = element_text(size = 5),
+        axis.title = element_text(size = 5),
+        axis.ticks = element_line(size = 0.2),
+        legend.key.height = unit(0.2, "cm"),
+        legend.text = element_text(size = 5))
 
 
+# Data handling for percentage change between 2019 and 2020 by month and cluster.
+rel_diff_20_19 <-   as.data.frame(100*((matrix_2020 - matrix_2019) / matrix_2019))
+names(rel_diff_20_19) <-  c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug')
+rel_diff_20_19$Cluster <-  c('A', 'B', 'C' ,'D' ,'E' ,'F' )
+d2p <-  pivot_longer(rel_diff_20_19, cols = c(!Cluster) , names_to = 'month', values_to = 'percent_change')
+d2p$month <-  factor(d2p$month, levels = c( 'Feb', 'Mar', 'Apr', 'May', 'Jun' , 'Jul', 'Aug') )
+
+d2p <- d2p %>%
+  mutate(Cluster = fct_relevel(Cluster, "F", "E", "D", "C", "B", "A"))
+
+perc_change_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill = percent_change)) + 
+  geom_tile() +
+  # geom_text(mapping = aes(label = round(percent_change, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(direction = -1) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = NULL) +
+  theme(legend.position = "bottom",
+        axis.text = element_text(size = 5),
+        axis.title = element_text(size = 5),
+        axis.ticks = element_line(size = 0.2),
+        legend.key.height = unit(0.2, "cm"),
+        legend.text = element_text(size = 5))
+
+# Plot the three heatmaps.
+heatmaps_gg <- plot_grid(count_diff_gg, perc_change_gg, av_diff_gg, nrow = 1, labels = c("(a)","(b)","(c)"),
+                         label_size = 6)
+
+# Save.
+ggsave(plot = heatmaps_gg, filename = "visuals/heatmaps_gg.png", width = 16, height = 6.5, unit = "cm")
 
 # Save and load workspace as appropriate.
 # save.image(file = "data_handling_cleaning.RData")

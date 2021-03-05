@@ -24,7 +24,7 @@ Examining the localized drivers of the lockdown crime drop represents the primar
 
 Recent months have seen a wave of interest in describing and explaining changes in crime in response to restrictions on mobility brought about to limit the spread of COVID-19. Studies include case study sites in the United States [@campedelli2020exploring; @gerell2020minor; @mohler2020impact; @piquero2020staying; @ashby2020initial], Australia [@payne2020covid; @payne2020property], the United Kingdom [@langton2021cs; @halford2020crime; @buil2020cybercrime] Canada [@hodgkinson2020show] and Mexico [@estevez2020crime]. Generally speaking, findings are consistent with opportunity perspectives and the mobility theory on the pandemic [@langton2021cs]. That is, legally-enforced restrictions on people's mobility and social interactions limited opportunities for criminality which in turn resulted in a macro-level decline in crime. As restrictions were relaxed, these opportunities reemerged, mobility patterns converged back to normality, and crime began to 'bounce back' -- often to levels that would have been expected without the global pandemic and ensuing lockdowns.
 
-That said, little is known about the localized drivers of these macro-level trends. An exploration of the extent to which the macro lockdown crime drop has been experienced equitably across space is valuable for two principal reasons. First, we would expect only a small number of fine-grained geographic units to have driven the lockdown crime drop. In pre-pandemic era, longitudinal studies have consistently demonstrated that, in a crime drop scenario, most local areas remained remarkably stable, with a disproportionatly large volume of change attributable to just handful of meso or micro-level units (e.g. @weisburd2004trajectories; @akmed2021mon; @curman2015crime; @bannister2018local). Findings have contributed to the evidence-base around routine activities theory, reflecing the considerable variation in criminal opportunities across (even spatially proximate) places [@eck2000finding; @weisburd2012criminology]. 
+That said, little is known about the localized drivers of these macro-level trends. An exploration of the extent to which the macro lockdown crime drop has been experienced equitably across space is valuable for two principal reasons. First, we would expect only a small number of fine-grained geographic units to have driven the lockdown crime drop. In pre-pandemic era, longitudinal studies have consistently demonstrated that, in a crime drop scenario, most local areas remained remarkably stable, with a disproportionatly large volume of change attributable to just handful of meso or micro-level units (e.g. @weisburd2004trajectories; @akmed2021mon; @curman2015crime; @bannister2018local). Findings have contributed to the evidence-base around routine activities theory, reflecing the considerable variation and concentration in criminal opportunities across (even spatially proximate) places [@eck2000finding; @weisburd2012criminology]. 
 
 Secondly,
 
@@ -148,6 +148,10 @@ The 'low crime and stable' clusters (A and B) actually _declined again_ between 
 
 ```{r changeline, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Counts and percentage of nationwide change between months attributable to each cluster.", out.width= "100%", fig.align='center'}
 knitr::include_graphics("visuals/change_k6_gg.png")
+```
+
+```{r heatmaps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Comparing clusters between equivalent months in 2020 and 2019 according to (a) absolute difference in counts, (b) relative percentage difference in counts, (c) average difference in LSOA counts.", fig.align='center'}
+knitr::include_graphics("visuals/heatmaps_gg.png")
 ```
 
 ## Characteristics of clusters
