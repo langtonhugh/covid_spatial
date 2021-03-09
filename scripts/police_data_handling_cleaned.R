@@ -756,26 +756,29 @@ count_diff_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill =
   # geom_text(mapping = aes(label = round(count_change, 2)), color = "white", size = 4) +
   scale_fill_viridis_c(direction = -1) +
   theme_bw() +
-  labs(x = NULL, y = NULL, fill = NULL) +
+  labs(x = NULL, y = NULL, fill = "Count   ") +
   theme(legend.position = "bottom",
         axis.text = element_text(size = 5),
         axis.title = element_text(size = 5),
         axis.ticks = element_line(size = 0.2),
         legend.key.height = unit(0.2, "cm"),
-        legend.text = element_text(size = 5))
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 7))
 
 av_diff_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill = av_change)) + 
   geom_tile() +
   # geom_text(mapping = aes(label = round(av_change, 2)), color = "white", size = 4) +
   scale_fill_viridis_c(direction = -1) +
   theme_bw() +
-  labs(x = NULL, y = NULL, fill = NULL) +
+  labs(x = NULL, y = NULL, fill = "Average \n count   ") +
   theme(legend.position = "bottom",
         axis.text = element_text(size = 5),
         axis.title = element_text(size = 5),
         axis.ticks = element_line(size = 0.2),
         legend.key.height = unit(0.2, "cm"),
-        legend.text = element_text(size = 5))
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 7))
+
 
 
 # Data handling for percentage change between 2019 and 2020 by month and cluster.
@@ -793,13 +796,15 @@ perc_change_gg <- ggplot(data = d2p, mapping = aes(x = month, y = Cluster, fill 
   # geom_text(mapping = aes(label = round(percent_change, 2)), color = "white", size = 4) +
   scale_fill_viridis_c(direction = -1) +
   theme_bw() +
-  labs(x = NULL, y = NULL, fill = NULL) +
+  labs(x = NULL, y = NULL, fill = "%   ") +
   theme(legend.position = "bottom",
         axis.text = element_text(size = 5),
         axis.title = element_text(size = 5),
         axis.ticks = element_line(size = 0.2),
         legend.key.height = unit(0.2, "cm"),
-        legend.text = element_text(size = 5))
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 7))
+
 
 # Plot the three heatmaps.
 heatmaps_gg <- plot_grid(count_diff_gg, perc_change_gg, av_diff_gg, nrow = 1, labels = c("(a)","(b)","(c)"),
