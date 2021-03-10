@@ -1,14 +1,20 @@
 ---
-title: 'Instability and inequality in the COVID-19 lockdown crime drop'
-output: pdf_document
-bibliography: refs.bib
+title: "Identifying local drivers of the COVID-19 lockdown crime drop in England and Wales"
+author:
+  - Samuel Langton
+  - Anthony Dixon
+  - Graham Farrell
 csl: apa.csl
-header-includes:
-  - \usepackage{float}
+header-includes: \usepackage{float}
+output:
+  pdf_document: default
+  word_document:
+    reference_docx: reference_doc.docx
+bibliography: refs.bib
 ---
 
 ```{r setup, include=FALSE, echo = F}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, eval = T) 
 library(readr);library(kableExtra)
 ```
 
@@ -24,15 +30,17 @@ Examining the localized drivers of the lockdown crime drop represents the primar
 
 Recent months have seen a wave of interest in describing and explaining changes in crime in response to restrictions on mobility brought about to limit the spread of COVID-19. Studies include case study sites in the United States [@campedelli2020exploring; @gerell2020minor; @mohler2020impact; @piquero2020staying; @ashby2020initial], Australia [@payne2020covid; @payne2020property], the United Kingdom [@langton2021cs; @halford2020crime; @buil2020cybercrime] Canada [@hodgkinson2020show] and Mexico [@estevez2020crime]. Generally speaking, findings are consistent with opportunity perspectives and the mobility theory of crime during the pandemic [@langton2021cs; @halford2020crime]. That is, legally-enforced restrictions on people's mobility and social interactions limited opportunities for criminality which in turn resulted in a macro-level decline in crime. As restrictions were relaxed, these opportunities reemerged, mobility patterns converged back to normality, and crime began to 'bounce back' -- often to levels that would have been expected without the global pandemic and ensuing lockdowns.
 
-That said, little is known about the localized drivers of these macro-level trends. To what extent have local areas experienced the lockdown crime drop in unison? This exploration represents a unique test of opportunity perspectives on crime, which would stipulate that only a small number of local areas will have driven the lockdown crime drop. In the pre-pandemic era, longitudinal studies have consistently demonstrated that, in a macro-level crime drop scenario, most meso or micro-level areas remained remarkably stable, with a disproportionately large volume of change attributable to just handful of units [e.g. @weisburd2004trajectories; @akmed2021mon; @curman2015crime; @bannister2018local]. This is credited to highly localized opportunity structures, which can differ considerably within the same city, and even within the same neighborhood [@eck2000finding; @weisburd2012criminology]. Here, we expect that areas typically characterized by plentiful opportunities for crime, which quickly become unavailable following the imposition of lockdown measures, will drive the lockdown crime drop.
+That said, little is known about the localized drivers of these macro-level trends. To what extent have local areas experienced the lockdown crime drop in unison? This exploration represents a unique test of opportunity perspectives on crime, which would stipulate that only a small number of local areas will have driven the lockdown crime drop. In the pre-pandemic era, longitudinal studies have consistently demonstrated that, in a macro-level crime drop scenario, most meso or micro-level areas remained remarkably stable. Instead, a disproportionately large volume of the macro-level change is attributable to a small number of units [e.g. @weisburd2004trajectories; @akmed2021mon; @curman2015crime; @bannister2018local; @vandeviver2019stability]. This finding can be credited to highly localized opportunity structures, which can differ considerably within the same city, and even within the same neighborhood [@eck2000finding; @weisburd2012criminology]. A shift in these local structures, brought about either through intervention (e.g. hotspot policing) or rapid changes in routine activities [@griffiths2004communities] can bring about wider (macro) change in crime rates.
 
-Preliminary evidence from the United States certainly suggests that macro lockdown crime trends might mask underlying variation. Using police-recorded crime data in San Francisco and Oakland, @shayegh2020staying provided visual descriptive evidence which indicated some degree of geographic variation in pre and post-lockdown crime. A study of Detroit census block groups found that, amidst a fall in burglaries following a stay at home order, there was a shift in concentrations away from residential areas towards mixed and non-residential parts of the city [@felson2020routine]. 
+In a lockdown scenario, we might expect these effects to be both exaggerated (in scale) and instantaneous (in time). For instance, public transport hubs typically act as major crime generators due to the vast congregation of ambient populations in time and space facilitating the convergence of motivated offenders and suitable targets [@newton2018macro]. In lockdown, public transport services were either closed completely, or open only for a limited number of essential purposes. With the necessary convergence of offenders and victims disrupted, often quite literally overnight, we would expect these customarily high crime places to fall considerably, driving the macro-level trend. By contrast, areas typically devoid of criminal opportunity, with say, little or no ambient populations, may remain largely unaffected by lockdown restrictions on mobility, and in turn, contribute little to any macro-level change. In other words, while lockdowns are imposed at a city or national level, their effect on crime will likely be moderated by the opportunity structure of local areas.
 
-- We describe areas in terms of their opportunity structure, spatial patterning and crime type profile.
+Preliminary evidence from the United States certainly suggests that macro lockdown crime trends might mask underlying variation. Using police-recorded crime data in San Francisco and Oakland, @shayegh2020staying provided visual descriptive evidence which indicated a degree of geographic variation in pre and post-lockdown crime. In Detroit, a study using a small sample of block units found that, amidst a fall in burglaries following a stay at home order, there was a shift in concentrations away from residential areas towards mixed and non-residential parts of the city [@felson2020routine]. In Chicago, there is evidence of variability in the extent to which lockdown policies impacted upon crime. A small proportion of communities drove the citywide decline, with most areas remaining largely unchanged, and some areas even _increasing_, bucking the trend entirely [@campedelli2020disentangling]. Using regional units of analysis nested within the state of Queensland, Australia, @payneregional2021 found a degree of diversity in crime rate trends, suggesting that the lockdown crime drop was not 'universal'. In the United Kingdom, however, we have not seen a comprehensive decomposition of local variation and longitudinal (in)stability underpinning the lockdown crime drop and subsequent resurgence, or indeed an exploration of the opportunity structures characterizing the local areas which have driven macro-level changes.
+
+In this paper, we aim to identify the localized drivers of the lockdown crime drop in England and Wales. We achieve this using 7-months of police-recorded crime data between February and August, 2020. First, we summarize the nationwide (macro) trend in terms of absolute crime counts and concentration. Second, using a non-parametric longitudinal clustering technique, we identify meaningful clusters of meso-level areas which unpick stable (and volatile) local areas underpinning the macro-level trend. Third, we describe the clusters identified in terms of their spatial patterning, opportunity structures, and crime type profile.
 
 # Data and Method
 
-To examine localized instability in the lockdown crime drop, we make use of three data sources, namely, open police-recorded crime data, geographic boundaries from Ordnance Survey and the Office for National Statistics (ONS), and data sourced from the Open Street Map API. Each of these are now outlined in turn, followed by an outline of the methods deployed. Code to replicate the data downloads, handling, analyses and visualization reported here is openly available (https://github.com/langtonhugh/covid_spatial). 
+To examine localized instability in the lockdown crime drop, we make use of three data sources, namely, open police-recorded crime data, geographic boundaries from Ordnance Survey and the Office for National Statistics (ONS), and data sourced from the Open Street Map API. Each of these are now outlined in turn, followed by an outline of the methods deployed. Code to replicate the data downloads, handling, analyses and visualization reported here are openly available (https://github.com/langtonhugh/covid_spatial). 
 
 ## Crime data
 
@@ -129,9 +137,9 @@ The 'low crime and stable' clusters (A and B) actually _declined again_ between 
 knitr::include_graphics("visuals/change_k6_gg.png")
 ```
 
-These findings can be supplemented with a comparison to the previous year. Figure 5 compares the clusters identified in 2020 with the equivalent months in 2019. Here, it is clear that the 'high crime major drop' clusters (E and F) contributed the most to the lockdown crime drop relative to their size. By way of example, around 27,000 fewer crimes occurred in cluster A during April 2020 compared to April 2019 (Figure 5a). This translates to a 24% drop (Figure 5b), and an average fall per LSOA of 1.39 counts (Figure 5c). For cluster F, approximately 5,000 fewer crimes occurred (Figure 5a), which translates to an 87% drop (Figure 5b), and an average fall per LSOA of 543 counts (Figure 5c). In other words: whether comparing month-to-month change in 2020, or comparing equivalent months in 2019, the lockdown crime drop was driven by a small number of local areas, with most meso-level units remaining fairly stable, even amidst dramatic macro-level change.
+These findings can be supplemented with a comparison to the previous year. Figure 5 compares the clusters identified in 2020 with the equivalent months in 2019. Here, it is clear that the 'high crime major drop' clusters (E and F) contributed the most to the lockdown crime drop relative to their size. By way of example, around 27,000 fewer crimes occurred in cluster A--containing 19,162 LSOA--during April 2020 compared to April 2019 (Figure 5a). This translates to a 24% drop (Figure 5b), and an average fall per LSOA of 1.39 counts (Figure 5c). For cluster F, containing just 9 LSOA, approximately 5,000 fewer crimes occurred (Figure 5a), which translates to an 87% drop (Figure 5b), and an average fall per LSOA of 543 counts (Figure 5c). In other words: whether comparing month-to-month change in 2020, or comparing equivalent months in 2019, the lockdown crime drop was disproportionately driven by a small number of local areas, with most meso-level units remaining fairly stable, even amidst dramatic macro-level change.
 
-```{r heatmaps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Comparing clusters between equivalent months in 2020 and 2019 according to (a) absolute difference in counts, (b) percentage difference in counts, (c) average difference in counts.", fig.align='center'}
+```{r heatmaps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Comparing LSOA clusters between equivalent months in 2020 and 2019 according to (a) absolute difference in counts, (b) percentage difference in counts, (c) average difference in counts.", fig.align='center'}
 knitr::include_graphics("visuals/heatmaps_gg.png")
 ```
 
@@ -139,12 +147,11 @@ knitr::include_graphics("visuals/heatmaps_gg.png")
 
 ### Spatial distribution
 
-The provide local context to the cluster solutions identified through the k-means clustering, we visualize the spatial patterning of groupings for six major cities in England and Wales (see Figure 5). We find distinct geographic pattern to the clusters identified. Here, it is worth noting that the Bradford region contains the city of Bradford, but also the satellite town of Keighley to the north west. The cluster map thus reflects these two urban centers. Without exception, the city centres and commercial districts of each city are characterised by 'high crime major drop' clusters E and F, which in turn often neighbor the 'mid crime mid drop' cluster D. By contrast, the 'low crime and stable' clusters tend to sit outside of the city centres: cluster B in the suburbs and the sparsely populated cluster A LSOA on the periphery of urban conurbations. For a detailed investigation of the spatial clusters identified for the whole of England and Wales, we refer readers to an openly available online map (anonymized link here).
+The provide local context to the cluster solutions identified through the k-means clustering, we visualize the spatial patterning of groupings for six major cities in England and Wales (see Figure 5). We find distinct geographic pattern to the clusters identified. Here, it is worth noting that the Bradford region contains the city of Bradford, but also the satellite town of Keighley to the north west. The cluster map thus reflects these two urban centers. Without exception, the city centres and commercial districts of each city are characterised by 'high crime major drop' clusters E and F, which in turn often neighbor the 'mid crime mid drop' cluster D. By contrast, the 'low crime and stable' clusters tend to sit outside of the city centres: cluster B in the suburbs and the sparsely populated cluster A on the periphery of urban conurbations. For a detailed and interactive investigation of the spatial clusters identified for the whole of England and Wales, we refer readers to an openly available online map (anonymized link here).
 
 ```{r  maps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Spatial distribution of clusters by major urban conurbation.", out.width= "100%", fig.align='center'}
 knitr::include_graphics("visuals/maps_gg.png")
 ```
-
 
 ### Opportunity structure
 
