@@ -379,8 +379,8 @@ gini_gg <- ggplot(data = gini_crime_type_df) +
 # Save.
 ggsave(plot = gini_gg, filename = "visuals/gini_gg.png", width = 14, height = 20, units = "cm", dpi = 600)
 
-# Long-term trends for public order.
-long_term_gg <- sub_data_agg_full_df %>% 
+# Long-term trends by crime type.
+long_term_ct_gg <- sub_data_agg_full_df %>% 
   filter(crime_type == "Public order" | crime_type == "Violence and sexual offences" |
          crime_type == "Other crime",
          month != "2020-09" & month != "2020-10" & month != "2020-11") %>% 
@@ -395,8 +395,27 @@ long_term_gg <- sub_data_agg_full_df %>%
   labs(y = "Counts", x = NULL) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
-  
-ggsave(plot = long_term_gg, filename = "visuals/long_term_gg.png", height = 20, width = 20, unit = "cm")
+
+# Save.  
+ggsave(plot = long_term_ct_gg, filename = "visuals/long_term_ct_gg.png", height = 20, width = 20, unit = "cm")
+
+# For main measure.
+long_term_gg <- sub_data_agg_full_df %>% 
+  filter(crime_type != "Anti-social behaviour" & crime_type != "Drugs",
+         month != "2020-09" & month != "2020-10" & month != "2020-11") %>% 
+  group_by(month, year) %>% 
+  summarise(ew_crime_count = sum(crime_count)) %>% 
+  ungroup() %>% 
+  mutate(year = recode_factor(year, "2018" = "2018", "2019" = "2019", "2020" = "2020")) %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = month, y = ew_crime_count, group = 1)) +
+  geom_vline(xintercept = 27, linetype = "dotted") +
+  labs(y = "Counts", x = NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+# Save.  
+ggsave(plot = long_term_gg, filename = "visuals/long_term_gg.png", height = 6, width = 15, unit = "cm")
 
 # Remove object to free up memory if needed.
 rm(total_crime_agg_df, gini_total_crime_df, gini_crime_type_df, gini_gg, raw_counts_gg)
