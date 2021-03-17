@@ -866,11 +866,13 @@ liver_sf <- lsoa_ew_valid_sf %>%
 cardiff_sf <- lsoa_ew_valid_sf %>% 
   filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Cardiff"))
 
-# Visual inspection tells us that Cardiff has an island LSOA to the south. This is Flat Holne Island - we
-# remove this for the visual, and because its policing/opportunity structure will perform independently 
-# to Cardiff. LSOA code identified interactively in QGIS.
-cardiff_sf <- cardiff_sf %>% 
+# Visual inspection tells us that Cardiff has an island LSOA to the south. This includes Flat Holm Island - we
+# remove this for the visual. LSOA code identified interactively in QGIS. Crude but for visual it's okay.
+cardiff_sf <- cardiff_sf %>%
   filter(lsoa_code != "W01001940")
+
+# Remove Flat Holne Island from Cardiff.
+# cardiff_sf <- rmapshaper::ms_filter_islands(input = cardiff_sf, min_area = 10000)
 
 # Create list.
 cities_list <- list(birm_sf, leeds_sf, sheff_sf, brad_sf, liver_sf, cardiff_sf)
