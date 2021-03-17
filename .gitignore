@@ -1,19 +1,9 @@
 # History files
 .Rhistory
-
-# Data files
 data/*
 
 # Session Data files
 data_handling_cleaning.RData
-drugs_replication.RData
-
-# Scripts
-police_data_handling_cleaned_drugs.r
-
-# Folders
-old
-visuals/drugs
 
 # User-specific files
 .Ruserdata
