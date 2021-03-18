@@ -550,6 +550,7 @@ kmeans_violin_full_gg <- ggplot() + theme_bw() +
   geom_violin(data = filter(tc_clusters_agg_df, year == "2020"),
               mapping = aes(x = month_name, y = ew_crime_count, fill = traj_titles),
               alpha = 0.3, colour = "transparent", adjust = 2) + 
+  # scale_fill_brewer(guide = FALSE, palette = "Spectral", direction = -1) +
   scale_fill_hue(guide = FALSE) +
   stat_summary(data = filter(tc_clusters_agg_df, year == "2018"),
                mapping = aes(x = month_name, y = ew_crime_count, group = traj_titles, colour = "blue"),
@@ -845,26 +846,50 @@ lsoa_ew_valid_sf <- sub_data_agg_full_df %>%
   st_as_sf()
 
 # Save.
-st_write(obj = lsoa_ew_valid_sf, dsn = "data/lsoa_ew_valid_k6_sf.shp")
+# st_write(obj = lsoa_ew_valid_sf, dsn = "data/lsoa_ew_valid_k6_sf.shp")
+
+# Add OSM data to define city centres.
+osm_df <- read_csv("data/osm_full.csv")
+
+# Create sums (see below for actual OSM statistics by cluster).
+osm_df <- osm_df %>% 
+  mutate(transport_total = trains + bus,
+         shops_total     = shops_total + conveniences) %>% 
+  mutate(sum = nightlife_total + transport_total + bikes + shops_total)
+
+lsoa_ew_valid_osm_sf <- lsoa_ew_valid_sf %>% 
+  left_join(osm_df, by = c("lsoa_code" = "geo_code", "geo_label" = "geo_label"))
 
 # Selection of cities. Top 5 by population in England minus London plus Cardiff.
-birm_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Birmingham"))
+birm_sf <- lsoa_ew_valid_osm_sf %>% 
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Birmingham")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains)))
 
-leeds_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Leeds"))
+leeds_sf <- lsoa_ew_valid_osm_sf %>%   
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Leeds")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains)))
 
-sheff_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Sheffield"))
+sheff_sf <- lsoa_ew_valid_osm_sf %>% 
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Sheffield")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains)))
 
-brad_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Bradford"))
+brad_sf <- lsoa_ew_valid_osm_sf %>% 
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Bradford")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains))) 
 
-liver_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Liverpool"))
+liver_sf <- lsoa_ew_valid_osm_sf %>% 
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Liverpool")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains)))
 
-cardiff_sf <- lsoa_ew_valid_sf %>% 
-  filter(str_detect(string = lsoa_ew_valid_sf$geo_label, pattern = "Cardiff"))
+cardiff_sf <- lsoa_ew_valid_osm_sf %>% 
+  filter(str_detect(string = lsoa_ew_valid_osm_sf$geo_label, pattern = "Cardiff")) %>% 
+  mutate(centre1 = as.integer(sum == max(sum)),
+         centre2 = as.integer(trains == max(trains)))
 
 # Visual inspection tells us that Cardiff has an island LSOA to the south. This is Flat Holne Island - we
 # remove this for the visual, and because its policing/opportunity structure will perform independently 
@@ -880,6 +905,7 @@ cities_list <- list(birm_sf, leeds_sf, sheff_sf, brad_sf, liver_sf, cardiff_sf)
 map_fun <- function(x) {
   ggplot(data = x) +
     geom_sf(mapping = aes(fill = traj_titles), size = 0.0001, colour = "black", alpha = 0.8) +
+    geom_sf(data = filter(x, centre1 == 1), fill = "transparent", colour = "black", size = 0.4) +
     theme_minimal() +
     theme(legend.position = "none",
           axis.text = element_text(size = 4)) +
