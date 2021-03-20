@@ -11,3 +11,6 @@ data_handling_cleaning.RData
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+# Paper
+.pdf
