@@ -311,12 +311,6 @@
   year={2008},
   publisher={Taylor \& Francis}
 }
-@article{langton2020crime,
-  title={Crime and Anti-social Behaviour in Greater London},
-  author={Langton, Samuel},
-  year={2020},
-  publisher={University of Leeds}
-}
 @misc{ONSyear20,
   title={Coronavirus and crime in England and Wales: August 2020},
   author={{Office for National Statistics}},
@@ -574,9 +568,12 @@ source={Scopus},
   publisher={University of Chicago Press Chicago, IL}
 }
 @article{langton2021cs,
-  title={Social change and crime rate trends: A routine activity approach},
+  title={Six months in: pandemic crime trends in England and Wales},
   author={Langton, Samuel and Dixon, Anthony and Farrell, Graham},
-  journal={Crime Science},
+  journal={Crime science},
+  volume={10},
+  number={1},
+  pages={1--16},
   year={2021},
   publisher={Springer}
 }
@@ -631,7 +628,8 @@ source={Scopus},
   title={Open Street Map for crime and place},
   author={Langton, Samuel and Solymosi, Reka},
   year={2020},
-  publisher={OSF Preprints}
+  journal={OSF Preprints},
+  pages={https://osf.io/a96y7}
 }
 @article{bernasco2017more,
   title={More places than crimes: Implications for evaluating the law of crime concentration at place},
@@ -725,7 +723,7 @@ source={Scopus},
 }
 @article{payneregional2021,
   title={xploring regional variability in the short-term impact of COVID-19 on property crime in Queensland, Australia},
-  author={Payne, Jason L and Morgan, Anthony and Piquero, Alex},
+  author={Payne, Jason and Morgan, Anthony and Piquero, Alex},
   journal={Crime Science},
   volume={10},
   number={7},
@@ -745,14 +743,18 @@ source={Scopus},
 @article{dixon2020crime,
   title={Spatial distributive justice and crime in the covid-19 pandemic},
   author={Dixon, Anthony and Halford, Eric and Farrell, Graham},
+  journal={Statistical Bulletin on Crime and COVID-19},
+  number={Issue 2, 27 July 2020},
   year={2020},
-  publisher={University of Leeds}
+  pages={University of Leeds}
 }
 @article{dixon2020fly,
   title={Fly-tipping during the Pandemic},
   author={Dixon, Anthony and Tlley, Nick},
+  journal={Statistical Bulletin on Crime and COVID-19},
+  number={Issue 13, 26 November 2020},
   year={2020},
-  publisher={University of Leeds}
+  pages={University of Leeds}
 }
 @article{tseloni2005population,
   title={Population inequality: the case of repeat crime victimization},

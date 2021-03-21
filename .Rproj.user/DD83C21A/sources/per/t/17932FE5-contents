@@ -1,15 +1,14 @@
 ---
 title: "Spatial distribution of the COVID-19 lockdown crime drop in England and Wales"
 author:
-  - Samuel Langton
-  - Anthony Dixon
-  - Graham Farrell
+- Samuel Langton (University of Leeds)
+- Anthony Dixon (University of Leeds) 
+- Graham Farrell (University of Leeds)
 csl: apa.csl
-header-includes: \usepackage{float}
 output:
   word_document:
     reference_docx: reference_doc.docx
-  pdf_document: default
+header-includes: \usepackage{float}
 bibliography: refs.bib
 ---
 
@@ -17,6 +16,22 @@ bibliography: refs.bib
 knitr::opts_chunk$set(echo = FALSE, eval = F) 
 library(readr);library(kableExtra)
 ```
+
+**Abstract**
+
+Studies from international case study sites have documented the impact of the COVID-19 pandemic and ensuing lockdown policies on crime. Restrictions on mobility and social interaction have brought about widespread falls in police-recorded crime, swiftly followed by a resurgence as lockdowns were lifted. Less is known about the localized spatial patterning of these macro-level trends. This study uses police-recorded data on notifiable offences to decompose the nationwide lockdown trend in England and Wales. We find that local, meso-level areas did not experience the decline and subsequent 'bounce back' in unison. Rather, most areas remained remarkably stable, with a small number of meso units contributing a disproportionate amount to the macro-level trend. We find that these areas often occupy city centres, had plentiful opportunities for crime pre-pandemic and were dominated by theft and shoplifting offences.
+
+**Keywords:** COVID-19, clustering, kmeans, routine activities, opportunity theory, pandemic.
+
+**Corresponding author:** Graham Farrell, School of Law, University of Leeds, United Kingdom.
+
+Email: g.farrell@leeds.ac.uk.
+
+**Competing interests:** The authors declare that they have no competing interests.
+
+**Availability of data and materials:** The data are publicly available and retrievable from the open online data portal for England, Wales and Northern Ireland. Code to replicate data downloads, handling and analyses is openly available (https://anonymous.4open.science/r/46199882-cc5a-449d-9946-300b3132ab2e/).
+
+\newpage
 
 # Introduction
 
@@ -28,7 +43,7 @@ Examining the localized drivers of the lockdown crime drop (and subsequent resur
 
 # Background
 
-Recent months have seen a wave of interest in describing and explaining how crime has changed in response to restrictions on mobility brought about to limit the spread of COVID-19. Studies have been undertaken in the United States [@campedelli2020exploring; @mohler2020impact; @piquero2020staying; @ashby2020initial], Australia [@payne2020covid; @payne2020property], the United Kingdom [@langton2021cs; @halford2020crime; @buil2020cybercrime] Canada [@hodgkinson2020show], Sweden [gerell2020minor], China (@borrion2020measuring) and Mexico [@estevez2020crime]. Generally speaking, findings have been consistent with opportunity perspectives and the mobility theory of crime during the pandemic [@halford2020crime]. That is, legally-enforced restrictions on daily activities, mobility and social interactions limited opportunities for criminality which in turn resulted in a macro-level decline in crime. As restrictions were relaxed, these opportunities reemerged, mobility patterns converged back to normality, and crime began to 'bounce back' -- often back to levels that would have been expected without the global pandemic and ensuing lockdowns [@langton2021cs]
+Recent months have seen a wave of interest in describing and explaining how crime has changed in response to restrictions on mobility brought about to limit the spread of COVID-19. Studies have been undertaken in the United States [@campedelli2020exploring; @mohler2020impact; @piquero2020staying; @ashby2020initial], Australia [@payne2020covid; @payne2020property], the United Kingdom [@langton2021cs; @halford2020crime; @buil2020cybercrime] Canada [@hodgkinson2020show], Sweden [@gerell2020minor], China (@borrion2020measuring) and Mexico [@estevez2020crime]. Generally speaking, findings have been consistent with opportunity perspectives and the mobility theory of crime during the pandemic [@halford2020crime]. That is, legally-enforced restrictions on daily activities, mobility and social interactions limited opportunities for criminality which in turn resulted in a macro-level decline in crime. As restrictions were relaxed, these opportunities reemerged, mobility patterns converged back to normality, and crime began to 'bounce back' -- often back to levels that would have been expected without the global pandemic and ensuing lockdowns [@langton2021cs].
 
 That said, little is known about the localized drivers of these macro-level trends. To what extent have local areas experienced lockdown trends in unison? This exploration represents a unique test of opportunity perspectives on crime, which would stipulate, for instance, that only a small number of local areas will have driven the lockdown crime drop. Prior to the COVID-19 pandemic, longitudinal studies have consistently demonstrated that, in a macro-level crime drop scenario, most meso or micro-level areas remained remarkably stable. Instead, a disproportionately large volume of the macro-level change is attributable to a small number of units [e.g. @weisburd2004trajectories; @akmed2021mon; @curman2015crime; @bannister2018local; @andresen2017trajectories]. This finding can be credited to highly localized opportunity structures, which can differ considerably within the same city, and even within the same neighborhood [@eck2000finding; @weisburd2012criminology]. A shift in these local structures, brought about either through intervention (e.g. hotspot policing) or rapid changes in routine activities [@griffiths2004communities] can bring about wider (macro) change in crime rates, even if most units nested within the macro region remain stable.
 
@@ -56,7 +71,7 @@ To provide national context to the main analysis, we use the (macro) geographic 
 
 ## Open Street Map
 
-To summarize the opportunity structure of local areas we required a nationwide dataset of theoretically relevant facilities and urban features which could be aggregated at the LSOA level. To this end, we obtained point-level data from the Application Programming Interface (API) for Open Street Map via the `osmdata` package [@padgham2017osmdata] in `R` [@team2013r]. Open Street Map is a crowdsourced geospatial database containing a vast array of features which can be used for explaining the temporal and spatial patterning of crime [@langton2020open]. Geographic features are identified by pairs of keys and values which can be used to computationally query the API for geospatial data. Based on existing research examining the opportunity structures of fine-grained spatial scales, we collated the coordinate locations of the following facilities:
+To summarize the opportunity structure of local areas we required a nationwide dataset of theoretically relevant facilities and urban features which could be aggregated at the LSOA level. To this end, we obtained point-level data from the Application Programming Interface (API) for Open Street Map via the _osmdata_ package [@padgham2017osmdata] in _R_ [@team2013r]. Open Street Map is a crowdsourced geospatial database containing a vast array of features which can be used for explaining the temporal and spatial patterning of crime [@langton2020open]. Geographic features are identified by pairs of keys and values which can be used to computationally query the API for geospatial data. Based on existing research examining the opportunity structures of fine-grained spatial scales, we collated the coordinate locations of the following facilities:
 
 - Nightlife: pubs, nightclubs, restaurants.
 - Shops: convenience stores, malls, shoe shops, department stores, clothes shops, electrical shops, supermarkets, chemists, greengrocers.
@@ -79,7 +94,7 @@ To quantify the degree of meso-level uniformity underpinning the macro-level tre
 
 Here, we note that the experimental conditions of the COVID-19 lockdown make the usage of k-means particularly suitable. Existing research adopting the method has tended to investigate _long-term_ change over years or decades, focusing on the directional homogeneity (e.g. increasing, decreasing or stable) of clusters, rather than short-term volatility [@andresen2017trajectories]. To this end, it has demonstrated comparable value to model-based techniques such as group-based trajectory modelling [@curman2015crime]. But, one key strength of k-means is that it is also capable of identifying short-term fluctuation in longitudinal trends [@akmed2021mon]. In the lockdown scenario, crime opportunities were withdrawn quite literally overnight, and thus we might expect a similarly rapid and short-term change in crime at meso spatial scales. The ability to unpick these rapid changes represents a key strength of k-means over non-parametric techniques such as anchored k-medoids, which are designed for long-term rather than short-term change [@akmed2021mon] or group-based trajectory modelling, which is limited by polynomial terms [@griffiths2004communities].
 
-We deploy k-means using the `kml` package [@kmlpack] in R on notifiable offence (excluding drug) counts for LSOA in England and Wales (N = 33,075) between February and August 2020. To achieve a parsimonious cluster solution while minimizing the risk of missing underlying variation, we proposed potential solutions between two and eight clusters, choosing the final solution based on the Calinski-Criterion [@calinski1974dendrite]. For each potential solution, twenty redraws with different starting conditions were run to ensure that solutions were stable. Potential cluster solution options were also examined using Principal Component Analysis to establish their suitability.
+We deploy k-means using the _kml_ package [@kmlpack] in R on notifiable offence (excluding drug) counts for LSOA in England and Wales (N = 33,075) between February and August 2020. To achieve a parsimonious cluster solution while minimizing the risk of missing underlying variation, we proposed potential solutions between two and eight clusters, choosing the final solution based on the Calinski-Criterion [@calinski1974dendrite]. For each potential solution, twenty redraws with different starting conditions were run to ensure that solutions were stable. Potential cluster solution options were also examined using Principal Component Analysis to establish their suitability.
 
 We visualize the final cluster solution in a manner which conveys the underlying distribution of observations comprising each cluster at each time point, rather than reporting a summary statistic (e.g. the mean trajectory) in isolation. For each cluster, we also overlay the equivalent trajectories for 2018 and 2019 as a reference point for comparison to a 'typical' year. In doing so, we aim to not only identify localized (in)stability in the lockdown crime drop, but also assess the extent to which the trends observed have deviated from previous years.
 
@@ -95,47 +110,55 @@ Finally, recognizing the unique opportunity structure of specific crimes, we sum
 
 ## Nationwide trends
 
-To set the context for the localized analysis, Figure 2 visualizes crime counts between February and August 2020 for notifiable offences excluding drugs before and after lockdown. This descriptive analysis broadly confirms what has been demonstrated using model-based forecasting analyses elsewhere (Langton et al., 2021) although we note that this descriptive comparison does not account for long-term trends. In April, the first full month of lockdown in England and Wales, we observe a nationwide decline in notifiable offences in comparison to previous years. Upon the relaxation of lockdown rules, crime resurged back to normality, and by August, crime had returned to within a range we might have expected without the nationwide lockdown. This trend represents the 'global' trend which we will subsequently disentangle using localized analyses.
+To set the context for the localized analysis, Figure 1 visualizes crime counts between February and August 2020 for notifiable offences excluding drugs before and after lockdown. In April, the first full month of lockdown in England and Wales, we observe a nationwide decline in notifiable offences in comparison to previous years. Upon the relaxation of lockdown rules, crime resurged back to normality, and by August, crime had returned to within a range we might have expected without the nationwide lockdown [see also @langton2021cs]. This trend represents the 'global' trend which we will subsequently disentangle using localized analyses.
 
-```{r nocounts, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Notitifable offence (excluding drugs) counts in England and Wales during the lockdown period.", fig.align='center'}
+```{r nocounts, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Notifiable offence (excluding drugs) counts in England and Wales during the lockdown period.", fig.align='center'}
 knitr::include_graphics("visuals/no_raw_counts_gg.png")
 ```
+
+[Insert Figure 1 here. Caption: Notifiable offence (excluding drugs) counts in England and Wales during the lockdown period.]
 
 ## Longitudinal clustering
 
 ### Cluster trends
 
-We deploy non-parametric k-means clustering on LSOA (meso) level geographic units (N = 33,075) comprising England and Wales to decompose the macro-level 'decline and resurgence' observed between February and August, 2020. Based on an assessment of the Calinski-Criterion statistic [@calinski1974dendrite] and Principal Component Analysis (see Appendix), we determined the optimal solution to be 6 clusters (see Figure 3). Solid black lines represent the median count for each cluster at any given time point, with the black dotted line showing the mean. Violin plots have been added to convey variation around these points at each time point. These suggest that the mean and median point statistics summarize the underlying data reasonably well, and indicate that clusters are distinct from one another, with little overlap. Additional lines have been added to convey each clusters' mean and median trend in 2018 and 2019 respectively. These trends suggest that the clusters identified using the 2020 study period were distinct and meaningful even in previous years, and provide a relative baseline from which we can compare lockdown trends.
+We deploy non-parametric k-means clustering on LSOA (meso) level geographic units (N = 33,075) comprising England and Wales to decompose the macro-level 'decline and resurgence' observed between February and August, 2020. Based on an assessment of the Calinski-Criterion statistic [@calinski1974dendrite] and Principal Component Analysis, we determined the optimal solution to be 6 clusters (see Figure 2). Solid black lines represent the median count for each cluster at any given time point, with the black dotted line showing the mean. Violin plots have been added to convey variation around these points at each time point. These suggest that the mean and median point statistics summarize the underlying data reasonably well, and indicate that clusters are distinct from one another, with little overlap. Additional lines have been added to convey each clusters' mean and median trend in 2018 and 2019 respectively. These trends suggest that the clusters identified using the 2020 study period were distinct and meaningful even in previous years, and provide a relative baseline from which we can compare lockdown trends.
 
-Overall, we note that most LSOA were remarkably stable during the pandemic. Clusters A and B could be described and 'low crime and stable', exhibiting fairly low counts throughout the study period and across years. Together, these clusters comprise 89% of LSOA in England and Wales. Even amidst the stark macro-level decline in notifiable offences (see Figure 2) LSOA in these clusters only experienced marginal average dips in crime. The third largest cluster, cluster C, comprises 10% of LSOA in England and Wales. LSOA in this cluster experienced a more prominent dip in crime, along with cluster D (1.6% of LSOA). Together, we might describe these LSOAs as 'mid-crime, mid-drop'. In both cases, there is a clear deviation from previous years. Notifiable offences fall between March and April, and then began to converge back to levels observed in previous years.
+Overall, we note that most LSOA were remarkably stable during the pandemic. Clusters A and B could be described and 'low crime and stable', exhibiting fairly low counts throughout the study period and across years. Together, these clusters comprise 89% of LSOA in England and Wales. Even amidst the stark macro-level decline in notifiable offences (see Figure 1) LSOA in these clusters only experienced marginal average dips in crime. The third largest cluster, cluster C, comprises 10% of LSOA in England and Wales. LSOA in this cluster experienced a more prominent dip in crime, along with cluster D (1.6% of LSOA). Together, we might describe these LSOAs as 'mid-crime, mid-drop'. In both cases, there is a clear deviation from previous years. Notifiable offences fall between March and April, and then began to converge back to levels observed in previous years.
 
 ```{r kmeansnotoff, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "K-means cluster solutions for LSOA notifiable offences (excluding drugs). Distributions refer to 2020 only.", out.width= "90%", fig.align='center'}
 knitr::include_graphics("visuals/kmeans_violin_full_gg.png")
 ```
 
+[Insert Figure 2 here. Caption: K-means cluster solutions for LSOA notifiable offences (excluding drugs). Distributions refer to 2020 only.]
+
 That said, most 'action' appears to be occurring amongst a small subset of LSOA. Clusters E and F collectively comprise only 0.33% (N = 110). Yet, their crime counts are much higher, and the decline between March and April is considerable. We might therefore describe these clusters as 'high crime, major drop': LSOA with plentiful opportunities for crime in typical times, and in turn, LSOA which are most sensitive to the restriction in opportunities which followed after the imposition of lockdown. To further decompose these clusters, we now disentangle the contribution of each cluster.
 
 ### Contribution of each cluster
 
-To further unpick the contribution of these clusters to the nationwide lockdown crime drop, Figure 4 plots the monthly change in counts and percentage of total absolute change (i.e. positive or negative) attributable to each cluster. We can use this visual to identify which clusters drove the initial decline and subsequent nationwide resurgence in crime.
+To further unpick the contribution of these clusters to the nationwide lockdown crime drop, Figure 3 plots the monthly change in counts and percentage of total absolute change (i.e. positive or negative) attributable to each cluster. We can use this visual to identify which clusters drove the initial decline and subsequent nationwide resurgence in crime.
 
-As expected, the vast majority of change across all clusters occurred between March and April. Between these months, notifiable offences experienced a dramatic fall nationwide. That said, the figure demonstrates that this decline did not occur equitably across local areas. Consistent with the cluster solutions trends in Figure 3, a small number of LSOA (meso) units appear to have contributed disproportionately to the nationwide (macro) trend. For instance, clusters A and B, which comprise 58% and 31% of LSOA in the country, accounted for only 20% and 27% of the total decline between March and April. By contrast, clusters E and F, which together comprised only 0.33% of LSOA (N = 110) contributed to 15% of the nationwide drop in these months. Again, this suggests that most areas remarkably stable, given the nationwide volatility, with just a handful of areas driving the decline the nationwide lockdown crime drop.
+As expected, the vast majority of change across all clusters occurred between March and April. Between these months, notifiable offences experienced a dramatic fall nationwide. That said, the figure demonstrates that this decline did not occur equitably across local areas. Consistent with the cluster solutions trends in Figure 2, a small number of LSOA (meso) units appear to have contributed disproportionately to the nationwide (macro) trend. For instance, clusters A and B, which comprise 58% and 31% of LSOA in the country, accounted for only 20% and 27% of the total decline between March and April. By contrast, clusters E and F, which together comprised only 0.33% of LSOA (N = 110) contributed to 15% of the nationwide drop in these months. Again, this suggests that most areas remarkably stable, given the nationwide volatility, with just a handful of areas driving the decline the nationwide lockdown crime drop.
 
 This picture shifts slightly upon the beginning of the resurgence between April and May. Clusters A and B continue to contribute a disproportionately _small_ amount to nationwide change, but the proportion increases, with each contributing 24% and 42% to the increase respectively. The contribution of the smallest clusters E and F is small compared to the initial decline, 2% and 0% (when rounded), respectively. This can be largely attributed to the flattening of their crime count trends between these months. In other words, following their initially steep decline between March and April, crime remained reasonably unchanged between April and May in the 'high crime, major drop' areas.
 
 Following the period of stabilization, clusters E and F gather pace during the resurgence, as does cluster D. For instance, between June and July, these three clusters collectively account for 27% of the nationwide increase, despite comprising less than 2% of LSOA in the country. July to August represents an interesting period. Until that point, each cluster, despite their vastly differing relative contributions to change, were directionally homogeneous. In other words, every cluster declined between February and April, and then increased between April and July. Between July and August, clusters began to diverge. Nationwide, there was a marginal increase in notifiable offence counts (see Figure 1), but this clearly masks a great deal of localized variability.
 
-The 'low crime and stable' clusters (A and B) actually _declined again_ between July and August, and the higher crime clusters continued to increase. The change is almost imperceptible when viewing average counts in these LSOA (see Figure 3) but the sheer size of these units, collectively comprising 89% of England and Wales, has a major impact on nationwide trends. This is suggestive of highly localized change in opportunities as lockdown rules were relaxed: change which is aggregated away at the macro-level. Stable, low crime areas mitigated against further nationwide increases which may, if they had continued, resulted in a higher crime count in August than observed in previous years.
+The 'low crime and stable' clusters (A and B) actually _declined again_ between July and August, and the higher crime clusters continued to increase. The change is almost imperceptible when viewing average counts in these LSOA (see Figure 2) but the sheer size of these units, collectively comprising 89% of England and Wales, has a major impact on nationwide trends. This is suggestive of highly localized change in opportunities as lockdown rules were relaxed: change which is aggregated away at the macro-level. Stable, low crime areas mitigated against further nationwide increases which may, if they had continued, resulted in a higher crime count in August than observed in previous years.
 
 ```{r changeline, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Counts and percentage of nationwide change between months attributable to each cluster.", out.width= "100%", fig.align='center'}
 knitr::include_graphics("visuals/change_k6_gg.png")
 ```
 
-These findings can be supplemented with a comparison to the previous year. Figure 5 compares the clusters identified in 2020 with the equivalent months in 2019. Here, it is clear that the 'high crime major drop' clusters (E and F) contributed the most to the lockdown crime drop relative to their size. By way of example, around 27,000 fewer crimes occurred in cluster A--containing 19,162 LSOA--during April 2020 compared to April 2019 (Figure 5a). This translates to a 24% drop (Figure 5b), and an average fall per LSOA of 1.39 counts (Figure 5c). For cluster F, containing just 9 LSOA, approximately 5,000 fewer crimes occurred (Figure 5a), which translates to an 87% drop (Figure 5b), and an average fall per LSOA of 543 counts (Figure 5c). In other words: whether comparing month-to-month change in 2020, or comparing equivalent months in 2019, the lockdown crime drop was disproportionately driven by a small number of local areas, with most meso-level units remaining fairly stable, even amidst dramatic macro-level change.
+[Insert Figure 3 here. Caption: Counts and percentage of nationwide change between months attributable to each cluster.]
+
+These findings can be supplemented with a comparison to the previous year. Figure 4 compares the clusters identified in 2020 with the equivalent months in 2019. Here, it is clear that the 'high crime major drop' clusters (E and F) contributed the most to the lockdown crime drop relative to their size. By way of example, around 27,000 fewer crimes occurred in cluster A--containing 19,162 LSOA--during April 2020 compared to April 2019 (Figure 4a). This translates to a 24% drop (Figure 4b), and an average fall per LSOA of 1.39 counts (Figure 4c). For cluster F, containing just 9 LSOA, approximately 5,000 fewer crimes occurred (Figure 4a), which translates to an 87% drop (Figure 4b), and an average fall per LSOA of 543 counts (Figure 4c). In other words: whether comparing month-to-month change in 2020, or comparing equivalent months in 2019, the lockdown crime drop was disproportionately driven by a small number of local areas, with most meso-level units remaining fairly stable, even amidst dramatic macro-level change.
 
 ```{r heatmaps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Comparing LSOA clusters between equivalent months in 2020 and 2019 according to (a) absolute difference in counts, (b) percentage difference in counts, (c) average difference in counts.", fig.align='center'}
 knitr::include_graphics("visuals/heatmaps_gg.png")
 ```
+
+[Insert Figure 4 here. Caption: Comparing LSOA clusters between equivalent months in 2020 and 2019 according to (a) absolute difference in counts, (b) percentage difference in counts, (c) average difference in counts.]
 
 ## Characteristics of clusters
 
@@ -148,6 +171,8 @@ Without exception, the city centers and commercial districts of each city are ch
 ```{r  maps, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Spatial distribution of clusters by major urban conurbation. LSOA with the highest count of Open Street Map features (in black) denotes city centre.", out.width= "100%", fig.align='center'}
 knitr::include_graphics("visuals/maps_gg.png")
 ```
+
+[Insert Figure 5 here. Caption: Spatial distribution of clusters by major urban conurbation. LSOA with the highest count of Open Street Map features (in black) denotes city centre.]
 
 ### Opportunity structure
 
@@ -166,6 +191,8 @@ osm_table <- kable(osm_stats_df, caption = "Descriptive statistics of facilities
 column_spec(osm_table, c(1:7), width = c("4cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm", "1.5cm"))
 ```
 
+[Insert Table 1 here. Caption: Descriptive statistics of facilities and features in each cluster. Sourced from Open Street Map.]
+
 ### Crime type profile
 
 Given the unique longitudinal trends, spatial patterning and opportunity structure of the clusters identified using the aggregate notifiable offences measure, we might expect the clusters identified to have distinct crime type profiles (see Figure 6). In February, before the restrictions on mobility and social interaction, the crime type profiles of each cluster were already distinct. Higher crime clusters (e.g. E, and F) were weighted heavily towards shoplifting and theft. Low crime and stable clusters, by contrast, had higher proportions of criminal damage and arson, burglary and violence and sexual offences.
@@ -174,9 +201,11 @@ Overall, we observe a degree stability in the distribution of crime types both w
 
 Notable disparities between clusters arise with regards to theft from the person and other theft in cluster F, which as reported earlier, drove a considerable part of the nationwide decline in crime. Theft in these LSOA was squeezed upon lockdown commencement. In February, theft crime types comprised 53% of total crime, but by April, this figure had dropped to 13%. This occurred despite these crime types typically remaining stable during equivalent times of year (@langton2021cs; see Appendix). Somewhat surprisingly, given the spatial distribution and opportunity structures of clusters E and F in city centres, shoplifting did not experience a similar squeeze in these LSOA.
 
-```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type characteristics of each cluster solution.", out.width= "100%", fig.align='center'}
+```{r crimeprofile, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Crime type profiles of each cluster solution.", out.width= "100%", fig.align='center'}
 knitr::include_graphics("visuals/traj_crimes_monthly_k6_gg.png")
 ```
+
+[Insert Figure 6 here. Caption: Crime type profiles of each cluster solution.]
 
 # Discussion
 
@@ -198,8 +227,12 @@ This paper has aimed to investigate the localized drivers of the COVID-19 crime 
 knitr::include_graphics("visuals/raw_counts_gg.png")
 ```
 
-```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Monthly generalized Gini cofficient trends by offence type in England and Wales during the lockdown period.", fig.align='center'}
+[Insert Figure 7 here. Caption: Counts by offence type in England and Wales during the lockdown period.]
+
+```{r crimegini, fig.pos = 'H', message=F, comment=F, warning=F, fig.cap = "Monthly generalized Gini coefficient trends by offence type in England and Wales during the lockdown period.", fig.align='center'}
 knitr::include_graphics("visuals/gini_gg.png")
 ```
+
+[Insert Figure 8 here. Caption: Monthly generalized Gini coefficient trends by offence type in England and Wales during the lockdown period.]
 
 # References
