@@ -280,7 +280,7 @@ total_crime_agg_df <- sub_data_agg_full_df %>%
 # Single plot for notifiable offences.
 no_raw_counts_gg <- ggplot(data = total_crime_agg_df) +
   geom_line(mapping = aes(x = month, y = ew_crime_count, group = year, colour = year), size = 0.8) +
-  geom_vline(xintercept = 1.7, linetype = "dotted") +
+  # geom_vline(xintercept = 1.7, linetype = "dotted") +
   scale_x_discrete(labels = str_extract(month.name[2:9], "^.{3}")) +
   scale_color_manual(values = rev(c("black", "darkgrey", "lightgrey"))) +
   labs(x = NULL, y = "Count", colour = NULL) +
