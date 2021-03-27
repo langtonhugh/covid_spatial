@@ -1,0 +1,13 @@
+library(ggplot2)
+library(skimr)
+library(qualvar)
+
+attach(mpg)
+
+skim(manufacturer)
+skim(mpg$manufacturer)
+
+table(is.na(mpg$manufacturer))
+
+IQV<-as.vector(table(displ))
+DM(IQV, na.rm = TRUE)
