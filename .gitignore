@@ -1,9 +1,11 @@
 # History files
 .Rhistory
+
+# Data files
 data/*
 results/*_cor.csv
 
-# Session Data files
+# Session data files
 data_handling_cleaning.RData
 tc_traj.RData
 
@@ -18,7 +20,7 @@ tc_traj.RData
 scripts/police_data_handling_cleaned_drugs.R
 scripts/old
 
-# Paper.
+# Paper and submission files
 draft_paper.Rmd
 draft_paper.docx
 draft_paper.pdf
