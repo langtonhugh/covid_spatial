@@ -5,6 +5,7 @@ results/*_cor.csv
 
 # Session Data files
 data_handling_cleaning.RData
+tc_traj.RData
 
 # User-specific files
 .Ruserdata
