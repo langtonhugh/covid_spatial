@@ -12,5 +12,15 @@ data_handling_cleaning.RData
 *.utf8.md
 *.knit.md
 
+# Scripts
+scipts/police_data_handling_cleaning_drugs.R
+
 # Paper
-.pdf
+draft_paper.Rmd
+draft_paper.docx
+draft_paper.pdf
+reference_doc.docx
+refs.bib
+spatial_submission.zip
+spatial_submission
+tc_traj.RData
