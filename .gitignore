@@ -15,7 +15,7 @@ tc_traj.RData
 *.knit.md
 
 # Scripts
-scripts/police_data_handling_cleaning_drugs.R
+scripts/police_data_handling_cleaned_drugs.R
 scripts/old
 
 # Paper
@@ -29,3 +29,4 @@ spatial_submission
 tc_traj.RData
 apa.csl
 lit
+img
