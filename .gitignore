@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 data/*
+results/*_cor.csv
 
 # Session Data files
 data_handling_cleaning.RData
@@ -13,7 +14,8 @@ data_handling_cleaning.RData
 *.knit.md
 
 # Scripts
-scipts/police_data_handling_cleaning_drugs.R
+scripts/police_data_handling_cleaning_drugs.R
+scripts/old
 
 # Paper
 draft_paper.Rmd
@@ -24,3 +26,5 @@ refs.bib
 spatial_submission.zip
 spatial_submission
 tc_traj.RData
+apa.csl
+lit
