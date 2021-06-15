@@ -3,6 +3,7 @@
 
 # Data files
 data/*
+!data/osm_full.csv
 results/*_cor.csv
 
 # Session data files
