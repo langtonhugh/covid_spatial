@@ -18,7 +18,7 @@ library(factoextra)
 `%nin%` <- Negate(`%in%`)
 
 
-# Archive data downloaded January 2012, covering the 3-year period up to and including November 2020.
+# Archive data downloaded January 2021, covering the 3-year period up to and including November 2020.
 # if(!file.exists('data')){dir.create("data")}
 # download.file(url = "https://data.police.uk/data/archive/2020-11.zip", destfile = "data/archive2020-11.zip")
 
@@ -26,7 +26,7 @@ library(factoextra)
 # unzip(zipfile = "data/archive2020-11.zip", exdir = "data")
 
 # Note the loading and handling data is largely determined by available memory. Many people may be able to
-# run things more efficiently (and in a more straightforward order) with a more powerful computer.
+# run things more efficiently (and in a more straightforward order).
 
 # List all those 'street' files (rather than outcomes or stop and search).
 list_2020 <- paste("data/", list.files("data", pattern = glob2rx("2020*street.csv"),  recursive=TRUE), sep = "")
